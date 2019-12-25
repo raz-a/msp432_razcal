@@ -1,10 +1,28 @@
 
 use crate::pin::Pin;
+use crate::Reg16;
 
 /// TODO: Add support for more thsn just port 2
 
 const P2OUT_BITBAND: usize = 0x4209_8060;
 const P2DIR_BITBAND: usize = 0x4209_80A0;
+
+#[repr(C)]
+struct Port {
+    input: Reg16,
+    output: Reg16,
+    resistor_enable: Reg16,
+    drive_strength: Reg16,
+    select_0: Reg16,
+    select_1: Reg16,
+    interrupt_vector_low: Reg16,
+    reserved: (Reg16, Reg16, Reg16),
+    compliment_selection: Reg16,
+    interrupt_edge_select: Reg16,
+    interrupt_enable: Reg16,
+    interrupt_flag: Reg16,
+    interrupt_vector_high: Reg16
+}
 
 pub trait GpioOut {
     fn new(pin: Pin) -> Self;
