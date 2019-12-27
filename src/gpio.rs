@@ -4,6 +4,7 @@ use crate::Reg16;
 
 /// TODO: Add support for more thsn just port 2
 
+const PORT_MODULE: usize = 0x4000_4C00;
 const P2OUT_BITBAND: usize = 0x4209_8060;
 const P2DIR_BITBAND: usize = 0x4209_80A0;
 
