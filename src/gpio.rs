@@ -1,28 +1,27 @@
 
-use crate::pin::Pin;
-use crate::Reg16;
+use crate::pin::{Pin, PortName};
 
-/// TODO: Add support for more thsn just port 2
+/// TODO: Atmoic accesses when possible
 
 const PORT_MODULE: usize = 0x4000_4C00;
-const P2OUT_BITBAND: usize = 0x4209_8060;
-const P2DIR_BITBAND: usize = 0x4209_80A0;
+const PORT_J_OFFSET: usize = 0x120;
 
 #[repr(C)]
 struct Port {
-    input: Reg16,
-    output: Reg16,
-    resistor_enable: Reg16,
-    drive_strength: Reg16,
-    select_0: Reg16,
-    select_1: Reg16,
-    interrupt_vector_low: Reg16,
-    reserved: (Reg16, Reg16, Reg16),
-    compliment_selection: Reg16,
-    interrupt_edge_select: Reg16,
-    interrupt_enable: Reg16,
-    interrupt_flag: Reg16,
-    interrupt_vector_high: Reg16
+    input: u16,
+    output: u16,
+    direction: u16,
+    resistor_enable: u16,
+    drive_strength: u16,
+    select_0: u16,
+    select_1: u16,
+    interrupt_vector_low: u16,
+    reserved: (u16, u16, u16),
+    compliment_selection: u16,
+    interrupt_edge_select: u16,
+    interrupt_enable: u16,
+    interrupt_flag: u16,
+    interrupt_vector_high: u16
 }
 
 pub trait GpioOut {
@@ -33,47 +32,50 @@ pub trait GpioOut {
 }
 
 pub struct PushPullGpioOut {
-    out_bitband_addr: &'static mut u8,
-    dir_bitband_addr: &'static mut u8,
+    port: &'static mut Port,
+    mask: u16,
     _pin: Pin
 }
 
 impl GpioOut for PushPullGpioOut {
     fn new(pin: Pin) -> Self {
-        let out_value = P2OUT_BITBAND + ((pin.get_pin_offset_in_port() as usize) - 8) * core::mem::size_of::<u32>();
-        let dir_value = P2DIR_BITBAND + ((pin.get_pin_offset_in_port() as usize) - 8) * core::mem::size_of::<u32>();
+        let port_number = pin.get_port();
+        let mask: u16 = 1 << pin.get_pin_offset_in_port();
+
+        let addr = if port_number == PortName::port_j as u8 {
+            PORT_MODULE + PORT_J_OFFSET
+        
+        } else {
+            PORT_MODULE + core::mem::size_of::<Port>() * port_number as usize
+        };
+
         let gpio_out = unsafe {
             PushPullGpioOut {
-                out_bitband_addr: &mut *(out_value as *mut u8),
-                dir_bitband_addr: &mut *(dir_value as *mut u8),
+                port: &mut *(addr as *mut Port),
+                mask: mask,
                 _pin: pin
             }
         };
 
-        unsafe {
-            core::ptr::write_volatile(gpio_out.dir_bitband_addr, 1);
-        }
-
+        gpio_out.port.direction &= !gpio_out.mask;
         gpio_out
     }
 
     fn get_current_state(&self) -> bool {
-        unsafe {
-            core::ptr::read_volatile(self.out_bitband_addr) != 0
-        }
+        self.port.output & self.mask != 0
     }
 
     fn set(&mut self, value: bool) {
-        unsafe {
-            core::ptr::write_volatile(self.out_bitband_addr, value as u8);
+        if value {
+            self.port.output |= self.mask
+        
+        } else {
+            self.port.output &= !self.mask
         }
     }
 
     fn toggle(&mut self) {
-        let value = unsafe {
-            core::ptr::read_volatile(self.out_bitband_addr) == 0
-        };
-
-        self.set(value);
+        let value = self.port.output & self.mask;
+        self.set(value == 0);
     }
 }

@@ -1,6 +1,16 @@
 
 use core::sync::atomic::{AtomicU16, Ordering};
 
+#[derive(Copy, Clone)]
+pub enum PortName {
+    port_a = 0,
+    port_b = 1,
+    port_c = 2,
+    port_d = 3,
+    port_e = 4,
+    port_j = 5
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 pub enum PinName {
