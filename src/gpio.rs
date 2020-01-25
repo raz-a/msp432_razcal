@@ -42,9 +42,9 @@ impl GpioOut for PushPullGpioOut {
         let port_number = pin.get_port();
         let mask: u16 = 1 << pin.get_pin_offset_in_port();
 
-        let addr = if port_number == PortName::port_j as u8 {
+        let addr = if port_number == PortName::PortJ as u8 {
             PORT_MODULE + PORT_J_OFFSET
-        
+
         } else {
             PORT_MODULE + core::mem::size_of::<Port>() * port_number as usize
         };
@@ -57,7 +57,8 @@ impl GpioOut for PushPullGpioOut {
             }
         };
 
-        gpio_out.port.direction &= !gpio_out.mask;
+        gpio_out.port.output &= !gpio_out.mask;
+        gpio_out.port.direction |= gpio_out.mask;
         gpio_out
     }
 
@@ -68,7 +69,7 @@ impl GpioOut for PushPullGpioOut {
     fn set(&mut self, value: bool) {
         if value {
             self.port.output |= self.mask
-        
+
         } else {
             self.port.output &= !self.mask
         }
