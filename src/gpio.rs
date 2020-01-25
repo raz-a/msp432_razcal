@@ -76,7 +76,6 @@ impl GpioOut for PushPullGpioOut {
     }
 
     fn toggle(&mut self) {
-        let value = self.port.output & self.mask;
-        self.set(value == 0);
+        self.port.output ^= self.mask
     }
 }
