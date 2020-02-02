@@ -63,7 +63,14 @@ impl GpioOut for PushPullGpioOut {
             }
         };
 
-        port.direction |= 1 << pin_offset;
+        let direction_addr =
+            peripheral_to_alias(((&mut port.direction) as *mut u16) as u32, pin_offset);
+
+        let direction = unsafe {
+            &mut *(direction_addr as *mut u16)
+        };
+
+        *direction = 1;
         *gpio_out.output = 0;
         gpio_out
     }
