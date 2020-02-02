@@ -55,7 +55,7 @@ impl GpioOut for PushPullGpioOut {
             &mut *(addr as *mut Port)
         };
 
-        let output_addr = peripheral_to_alias((port.output as *mut u16) as u32, pin_offset);
+        let output_addr = peripheral_to_alias(((&mut port.output) as *mut u16) as u32, pin_offset);
         let gpio_out = unsafe {
             PushPullGpioOut {
                 output: &mut *(output_addr as *mut u16),
