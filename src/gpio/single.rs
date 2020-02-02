@@ -50,7 +50,6 @@ impl GpioOut for PushPullGpioOut {
         // TODO: Make sure gpio selection is reset.
         //
         let pin_offset = pin.get_pin_offset_in_port();
-        let mask = 1 << pin_offset;
         let addr = get_port_address(&pin);
         let port = unsafe {
             &mut *(addr as *mut Port)
@@ -64,8 +63,8 @@ impl GpioOut for PushPullGpioOut {
             }
         };
 
-        port.output &= !mask;
-        port.direction |= mask;
+        port.output = 0;
+        port.direction = 1;
         gpio_out
     }
 
