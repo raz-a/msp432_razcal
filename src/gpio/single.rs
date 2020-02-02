@@ -63,8 +63,8 @@ impl GpioOut for PushPullGpioOut {
             }
         };
 
-        port.output = 0;
-        port.direction = 1;
+        port.direction |= 1 << pin_offset;
+        *gpio_out.output = 0;
         gpio_out
     }
 
