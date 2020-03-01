@@ -111,5 +111,7 @@ fn get_supported_mcus() -> HashMap<String, Msp432Config> {
                            package: MSP432_PACKAGE_NFBGA
                        });
 
+    //TODO: Add more MSP432 variants.
+
     support_map
 }
