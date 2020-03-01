@@ -6,11 +6,11 @@ use super::*;
 // Input
 //
 
-pub enum GpioInternalResistor {
-    NoResistor,
-    PullUp,
-    PullDown
-}
+// pub enum GpioInternalResistor {
+//     NoResistor,
+//     PullUp,
+//     PullDown
+// }
 
 // pub struct GpioIn {
 //     input: &'static u16,
