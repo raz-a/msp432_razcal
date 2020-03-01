@@ -5,6 +5,6 @@ authors = ["Raz <raz-@outlook.com>"]
 edition = "2018"
 build = "build.rs"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
+[build-dependencies]
+serde = { version = "1.0.104", features = ["derive"] }
+toml = "0.5.6"
