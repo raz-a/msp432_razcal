@@ -1,4 +1,5 @@
 
+use core::mem::{MaybeUninit};
 use core::sync::atomic::{AtomicU16, Ordering};
 
 #[derive(Copy, Clone)]
@@ -215,10 +216,6 @@ impl PinName {
     pub const P10_7: PinName = PinName::PE_15;
 }
 
-pub struct Pin {
-    pin: PinName
-}
-
 #[cfg(not(any(msp432_package = "vqfn", msp432_package = "nfbga", msp432_package = "lqfp")))]
 compile_error!("Msp432 package must be defined.");
 
@@ -264,6 +261,10 @@ const fn extract_pin_number(pin_name: PinName) -> u8 {
     ((pin_name as u16) & 0xFF) as u8
 }
 
+pub struct Pin {
+    pin: PinName
+}
+
 impl Pin {
     pub fn new(pin: PinName) -> Option<Self> {
         let port = extract_port_number(pin) as usize;
@@ -302,3 +303,27 @@ impl Drop for Pin {
     }
 }
 
+pub struct PinSet<const COUNT: usize> {
+    pins: [Pin; COUNT]
+}
+
+impl<const COUNT: usize> PinSet<COUNT> {
+    pub fn new(pins: [PinName; COUNT]) -> Option<Self> {
+        let mut failing_index = 0;
+        let mut success: bool = true;
+        let pinSet =
+        for i in 0..COUNT {
+            let pin = Pin::new(pins[i]);
+            match pin {
+                Some(p) => {
+
+                },
+                None => {
+                    success = false;
+                    failing_index = i;
+                    break;
+                }
+            }
+        }
+    }
+}
