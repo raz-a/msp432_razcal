@@ -1,8 +1,10 @@
 
 mod single;
+mod bus;
 
-pub use single::GpioOut;
-pub use single::PushPullGpioOut;
+pub use single::*;
+pub use bus::*;
+
 
 use crate::pin::*;
 use super::PERIPHERAL_BASE;
@@ -11,7 +13,7 @@ const PORT_MODULE: u32 = PERIPHERAL_BASE + 0x4C00;
 const PORT_J_OFFSET: u32 = 0x120;
 
 #[repr(C)]
-struct Port {
+struct GpioPort {
     input: u16,
     output: u16,
     direction: u16,
@@ -34,6 +36,6 @@ fn get_port_address(pin: &Pin) -> u32 {
         PORT_MODULE + PORT_J_OFFSET
 
     } else {
-        PORT_MODULE + (core::mem::size_of::<Port>() as u32) * port_number
+        PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port_number
     }
 }

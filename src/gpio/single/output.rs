@@ -7,8 +7,7 @@ use crate::peripheral_to_alias;
 //
 
 pub trait GpioOut {
-    fn new(pin: Pin) -> Self;
-    fn get_current_state(&self) -> bool;
+
     fn set(&mut self, value: bool);
     fn toggle(&mut self);
 }
@@ -18,7 +17,7 @@ pub struct PushPullGpioOut {
     _pin: Pin
 }
 
-impl GpioOut for PushPullGpioOut {
+impl GpioSingle for PushPullGpioOut {
     fn new(pin: Pin) -> Self {
 
         //
@@ -27,7 +26,7 @@ impl GpioOut for PushPullGpioOut {
         let pin_offset = pin.get_pin_offset_in_port();
         let addr = get_port_address(&pin);
         let port = unsafe {
-            &mut *(addr as *mut Port)
+            &mut *(addr as *mut GpioPort)
         };
 
         let output_addr = peripheral_to_alias(((&mut port.output) as *mut u16) as u32, pin_offset);
@@ -53,7 +52,9 @@ impl GpioOut for PushPullGpioOut {
     fn get_current_state(&self) -> bool {
         *self.output != 0
     }
+}
 
+impl GpioOut for PushPullGpioOut {
     fn set(&mut self, value: bool) {
         *self.output = value as u16
     }

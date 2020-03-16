@@ -1,5 +1,6 @@
 
 #![cfg_attr(not(test), no_std)]
+#![feature(const_generics)]
 
 const PERIPHERAL_BASE:         u32 = 0x4000_0000;
 const PERIPHERAL_END:          u32 = 0x400F_FFFF;
