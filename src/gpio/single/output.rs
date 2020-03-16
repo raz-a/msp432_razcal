@@ -1,31 +1,6 @@
+use crate::gpio::*;
 use crate::pin::Pin;
 use crate::peripheral_to_alias;
-use super::*;
-
-//
-// Input
-//
-
-// pub enum GpioInternalResistor {
-//     NoResistor,
-//     PullUp,
-//     PullDown
-// }
-
-// pub struct GpioIn {
-//     input: &'static u16,
-//     _pin: Pin
-// }
-
-// impl GpioIn {
-//     fn new(pin: Pin, internal_resistor: GpioInternalResistor) -> Self {
-
-//     }
-
-//     fn get(&self) -> bool {
-//         false
-//     }
-// }
 
 //
 // Output
