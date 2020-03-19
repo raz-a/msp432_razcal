@@ -320,10 +320,11 @@ impl<const COUNT: usize> PinSet<COUNT> {
         let mut pins_allocated = 0;
         let mut pin_set_uninit: [MaybeUninit<Pin>; COUNT] = MaybeUninit::uninit_array();
         for i in 0..COUNT {
-            let allocated_pin = Pin::new(pins[i]);
+            let allocated_pin = Pin::new( unsafe { *pins.get_unchecked(i) });
             match allocated_pin {
                 Some(p) => {
-                    pin_set_uninit[i] = MaybeUninit::new(p);
+                    let pin = unsafe { pin_set_uninit.get_unchecked_mut(i) };
+                    *pin = MaybeUninit::new(p);
                     pins_allocated += 1;
                 },
                 None => {
