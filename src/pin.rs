@@ -271,7 +271,7 @@ impl Pin {
         let port = extract_port_number(pin) as usize;
         let pin_mask = 1 << extract_pin_number(pin);
         let value = unsafe {
-            PORT_PINS_AVAILABLE[port].fetch_nand(pin_mask, Ordering::Relaxed)
+            PORT_PINS_AVAILABLE.get_unchecked_mut(port).fetch_nand(pin_mask, Ordering::Relaxed)
         };
 
         if value & pin_mask == 0 {
@@ -299,7 +299,7 @@ impl Drop for Pin {
         let port = extract_port_number(self.pin) as usize;
         let pin_mask = 1 << extract_pin_number(self.pin);
         unsafe {
-            PORT_PINS_AVAILABLE[port].fetch_or(pin_mask, Ordering::Relaxed);
+            PORT_PINS_AVAILABLE.get_unchecked_mut(port).fetch_or(pin_mask, Ordering::Relaxed);
         }
     }
 }
