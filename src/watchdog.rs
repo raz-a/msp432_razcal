@@ -1,4 +1,3 @@
-
 use core::sync::atomic::{AtomicBool, Ordering};
 
 const WDTCTL_ADDRESS: usize = 0x4000_480C;
@@ -14,20 +13,18 @@ const WDTHOLD_MASK: u16 = 1 << WDTHOLD_SHIFT;
 static mut WDT_A_IN_USE: AtomicBool = AtomicBool::new(false);
 
 pub struct WatchdogTimer {
-    _unused: ()
+    _unused: (),
 }
 
 impl WatchdogTimer {
     pub fn acquire() -> Option<Self> {
-        let in_use = unsafe {
-            WDT_A_IN_USE.swap(true, Ordering::Relaxed)
-        };
+        let in_use = unsafe { WDT_A_IN_USE.swap(true, Ordering::Relaxed) };
 
         if in_use {
             return None;
         }
 
-        Some(WatchdogTimer{_unused: ()})
+        Some(WatchdogTimer { _unused: () })
     }
 
     pub fn disable(&mut self) {

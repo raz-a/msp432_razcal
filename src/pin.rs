@@ -1,7 +1,6 @@
-
+use crate::assume_init_const_generic_array;
 use core::mem::MaybeUninit;
 use core::sync::atomic::{AtomicU16, Ordering};
-use crate::assume_init_const_generic_array;
 
 #[derive(Copy, Clone)]
 pub enum PortName {
@@ -10,25 +9,23 @@ pub enum PortName {
     PortC = 2,
     PortD = 3,
     PortE = 4,
-    PortJ = 5
+    PortJ = 5,
 }
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 pub enum PinName {
-
     /// Port A (Port 1 + Port 2)
-
-    PA_0 =  pin_name(PortName::PortA, 0),
-    PA_1 =  pin_name(PortName::PortA, 1),
-    PA_2 =  pin_name(PortName::PortA, 2),
-    PA_3 =  pin_name(PortName::PortA, 3),
-    PA_4 =  pin_name(PortName::PortA, 4),
-    PA_5 =  pin_name(PortName::PortA, 5),
-    PA_6 =  pin_name(PortName::PortA, 6),
-    PA_7 =  pin_name(PortName::PortA, 7),
-    PA_8 =  pin_name(PortName::PortA, 8),
-    PA_9 =  pin_name(PortName::PortA, 9),
+    PA_0 = pin_name(PortName::PortA, 0),
+    PA_1 = pin_name(PortName::PortA, 1),
+    PA_2 = pin_name(PortName::PortA, 2),
+    PA_3 = pin_name(PortName::PortA, 3),
+    PA_4 = pin_name(PortName::PortA, 4),
+    PA_5 = pin_name(PortName::PortA, 5),
+    PA_6 = pin_name(PortName::PortA, 6),
+    PA_7 = pin_name(PortName::PortA, 7),
+    PA_8 = pin_name(PortName::PortA, 8),
+    PA_9 = pin_name(PortName::PortA, 9),
     PA_10 = pin_name(PortName::PortA, 10),
     PA_11 = pin_name(PortName::PortA, 11),
     PA_12 = pin_name(PortName::PortA, 12),
@@ -37,17 +34,16 @@ pub enum PinName {
     PA_15 = pin_name(PortName::PortA, 15),
 
     /// Port B (Port 3 + Port 4)
-
-    PB_0 =  pin_name(PortName::PortB, 0),
-    PB_1 =  pin_name(PortName::PortB, 1),
-    PB_2 =  pin_name(PortName::PortB, 2),
-    PB_3 =  pin_name(PortName::PortB, 3),
-    PB_4 =  pin_name(PortName::PortB, 4),
-    PB_5 =  pin_name(PortName::PortB, 5),
-    PB_6 =  pin_name(PortName::PortB, 6),
-    PB_7 =  pin_name(PortName::PortB, 7),
-    PB_8 =  pin_name(PortName::PortB, 8),
-    PB_9 =  pin_name(PortName::PortB, 9),
+    PB_0 = pin_name(PortName::PortB, 0),
+    PB_1 = pin_name(PortName::PortB, 1),
+    PB_2 = pin_name(PortName::PortB, 2),
+    PB_3 = pin_name(PortName::PortB, 3),
+    PB_4 = pin_name(PortName::PortB, 4),
+    PB_5 = pin_name(PortName::PortB, 5),
+    PB_6 = pin_name(PortName::PortB, 6),
+    PB_7 = pin_name(PortName::PortB, 7),
+    PB_8 = pin_name(PortName::PortB, 8),
+    PB_9 = pin_name(PortName::PortB, 9),
     PB_10 = pin_name(PortName::PortB, 10),
     PB_11 = pin_name(PortName::PortB, 11),
     PB_12 = pin_name(PortName::PortB, 12),
@@ -56,17 +52,16 @@ pub enum PinName {
     PB_15 = pin_name(PortName::PortB, 15),
 
     /// Port C (Port 5 + Port 6)
-
-    PC_0 =  pin_name(PortName::PortC, 0),
-    PC_1 =  pin_name(PortName::PortC, 1),
-    PC_2 =  pin_name(PortName::PortC, 2),
-    PC_3 =  pin_name(PortName::PortC, 3),
-    PC_4 =  pin_name(PortName::PortC, 4),
-    PC_5 =  pin_name(PortName::PortC, 5),
-    PC_6 =  pin_name(PortName::PortC, 6),
-    PC_7 =  pin_name(PortName::PortC, 7),
-    PC_8 =  pin_name(PortName::PortC, 8),
-    PC_9 =  pin_name(PortName::PortC, 9),
+    PC_0 = pin_name(PortName::PortC, 0),
+    PC_1 = pin_name(PortName::PortC, 1),
+    PC_2 = pin_name(PortName::PortC, 2),
+    PC_3 = pin_name(PortName::PortC, 3),
+    PC_4 = pin_name(PortName::PortC, 4),
+    PC_5 = pin_name(PortName::PortC, 5),
+    PC_6 = pin_name(PortName::PortC, 6),
+    PC_7 = pin_name(PortName::PortC, 7),
+    PC_8 = pin_name(PortName::PortC, 8),
+    PC_9 = pin_name(PortName::PortC, 9),
     PC_10 = pin_name(PortName::PortC, 10),
     PC_11 = pin_name(PortName::PortC, 11),
     PC_12 = pin_name(PortName::PortC, 12),
@@ -75,17 +70,16 @@ pub enum PinName {
     PC_15 = pin_name(PortName::PortC, 15),
 
     /// Port D (Port 7 + Port 8)
-
-    PD_0 =  pin_name(PortName::PortD, 0),
-    PD_1 =  pin_name(PortName::PortD, 1),
-    PD_2 =  pin_name(PortName::PortD, 2),
-    PD_3 =  pin_name(PortName::PortD, 3),
-    PD_4 =  pin_name(PortName::PortD, 4),
-    PD_5 =  pin_name(PortName::PortD, 5),
-    PD_6 =  pin_name(PortName::PortD, 6),
-    PD_7 =  pin_name(PortName::PortD, 7),
-    PD_8 =  pin_name(PortName::PortD, 8),
-    PD_9 =  pin_name(PortName::PortD, 9),
+    PD_0 = pin_name(PortName::PortD, 0),
+    PD_1 = pin_name(PortName::PortD, 1),
+    PD_2 = pin_name(PortName::PortD, 2),
+    PD_3 = pin_name(PortName::PortD, 3),
+    PD_4 = pin_name(PortName::PortD, 4),
+    PD_5 = pin_name(PortName::PortD, 5),
+    PD_6 = pin_name(PortName::PortD, 6),
+    PD_7 = pin_name(PortName::PortD, 7),
+    PD_8 = pin_name(PortName::PortD, 8),
+    PD_9 = pin_name(PortName::PortD, 9),
     PD_10 = pin_name(PortName::PortD, 10),
     PD_11 = pin_name(PortName::PortD, 11),
     PD_12 = pin_name(PortName::PortD, 12),
@@ -94,17 +88,16 @@ pub enum PinName {
     PD_15 = pin_name(PortName::PortD, 15),
 
     /// Port E (Port 9 + Port 10)
-
-    PE_0 =  pin_name(PortName::PortE, 0),
-    PE_1 =  pin_name(PortName::PortE, 1),
-    PE_2 =  pin_name(PortName::PortE, 2),
-    PE_3 =  pin_name(PortName::PortE, 3),
-    PE_4 =  pin_name(PortName::PortE, 4),
-    PE_5 =  pin_name(PortName::PortE, 5),
-    PE_6 =  pin_name(PortName::PortE, 6),
-    PE_7 =  pin_name(PortName::PortE, 7),
-    PE_8 =  pin_name(PortName::PortE, 8),
-    PE_9 =  pin_name(PortName::PortE, 9),
+    PE_0 = pin_name(PortName::PortE, 0),
+    PE_1 = pin_name(PortName::PortE, 1),
+    PE_2 = pin_name(PortName::PortE, 2),
+    PE_3 = pin_name(PortName::PortE, 3),
+    PE_4 = pin_name(PortName::PortE, 4),
+    PE_5 = pin_name(PortName::PortE, 5),
+    PE_6 = pin_name(PortName::PortE, 6),
+    PE_7 = pin_name(PortName::PortE, 7),
+    PE_8 = pin_name(PortName::PortE, 8),
+    PE_9 = pin_name(PortName::PortE, 9),
     PE_10 = pin_name(PortName::PortE, 10),
     PE_11 = pin_name(PortName::PortE, 11),
     PE_12 = pin_name(PortName::PortE, 12),
@@ -113,7 +106,6 @@ pub enum PinName {
     PE_15 = pin_name(PortName::PortE, 15),
 
     /// Port J
-
     PJ_0 = pin_name(PortName::PortJ, 0),
     PJ_1 = pin_name(PortName::PortJ, 1),
     PJ_2 = pin_name(PortName::PortJ, 2),
@@ -123,7 +115,6 @@ pub enum PinName {
 }
 
 impl PinName {
-
     /// Pin Aliases
 
     pub const P1_0: PinName = PinName::PA_0;
@@ -217,7 +208,11 @@ impl PinName {
     pub const P10_7: PinName = PinName::PE_15;
 }
 
-#[cfg(not(any(msp432_package = "vqfn", msp432_package = "nfbga", msp432_package = "lqfp")))]
+#[cfg(not(any(
+    msp432_package = "vqfn",
+    msp432_package = "nfbga",
+    msp432_package = "lqfp"
+)))]
 compile_error!("Msp432 package must be defined.");
 
 #[cfg(msp432_package = "vqfn")]
@@ -263,7 +258,7 @@ const fn extract_pin_number(pin_name: PinName) -> u8 {
 }
 
 pub struct Pin {
-    pin: PinName
+    pin: PinName,
 }
 
 impl Pin {
@@ -271,14 +266,16 @@ impl Pin {
         let port = extract_port_number(pin) as usize;
         let pin_mask = 1 << extract_pin_number(pin);
         let value = unsafe {
-            PORT_PINS_AVAILABLE.get_unchecked_mut(port).fetch_nand(pin_mask, Ordering::Relaxed)
+            PORT_PINS_AVAILABLE
+                .get_unchecked_mut(port)
+                .fetch_nand(pin_mask, Ordering::Relaxed)
         };
 
         if value & pin_mask == 0 {
             return None;
         }
 
-        Some(Pin {pin: pin})
+        Some(Pin { pin: pin })
     }
 
     pub fn get_pin(&self) -> PinName {
@@ -299,13 +296,15 @@ impl Drop for Pin {
         let port = extract_port_number(self.pin) as usize;
         let pin_mask = 1 << extract_pin_number(self.pin);
         unsafe {
-            PORT_PINS_AVAILABLE.get_unchecked_mut(port).fetch_or(pin_mask, Ordering::Relaxed);
+            PORT_PINS_AVAILABLE
+                .get_unchecked_mut(port)
+                .fetch_or(pin_mask, Ordering::Relaxed);
         }
     }
 }
 
 pub struct PinSet<const COUNT: usize> {
-    pins: [Pin; COUNT]
+    pins: [Pin; COUNT],
 }
 
 pub type PinSet2 = PinSet<2>;
@@ -320,13 +319,13 @@ impl<const COUNT: usize> PinSet<COUNT> {
         let mut pins_allocated = 0;
         let mut pin_set_uninit: [MaybeUninit<Pin>; COUNT] = MaybeUninit::uninit_array();
         for i in 0..COUNT {
-            let allocated_pin = Pin::new( unsafe { *pins.get_unchecked(i) });
+            let allocated_pin = Pin::new(unsafe { *pins.get_unchecked(i) });
             match allocated_pin {
                 Some(p) => {
                     let pin = unsafe { pin_set_uninit.get_unchecked_mut(i) };
                     *pin = MaybeUninit::new(p);
                     pins_allocated += 1;
-                },
+                }
                 None => {
                     break;
                 }
@@ -334,7 +333,9 @@ impl<const COUNT: usize> PinSet<COUNT> {
         }
 
         if pins_allocated == COUNT {
-            return Some(PinSet {pins: assume_init_const_generic_array(pin_set_uninit)});
+            return Some(PinSet {
+                pins: assume_init_const_generic_array(pin_set_uninit),
+            });
         }
 
         for pin in &mut pin_set_uninit[0..pins_allocated] {
