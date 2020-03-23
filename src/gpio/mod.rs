@@ -5,7 +5,6 @@ mod bus;
 pub use single::*;
 pub use bus::*;
 
-
 use crate::pin::*;
 use super::PERIPHERAL_BASE;
 

@@ -1,6 +1,7 @@
 use crate::gpio::*;
 use crate::pin::Pin;
 use crate::peripheral_to_alias;
+use super::set_pin_function_to_gpio;
 
 //
 // Output
@@ -19,16 +20,13 @@ pub struct PushPullGpioOut {
 
 impl GpioSingle for PushPullGpioOut {
     fn new(pin: Pin) -> Self {
-
-        //
-        // TODO: Make sure gpio selection is reset.
-        //
         let pin_offset = pin.get_pin_offset_in_port();
         let addr = get_port_address(&pin);
         let port = unsafe {
             &mut *(addr as *mut GpioPort)
         };
 
+        set_pin_function_to_gpio(port, pin_offset);
         let output_addr = peripheral_to_alias(((&mut port.output) as *mut u16) as u32, pin_offset);
         let gpio_out = unsafe {
             PushPullGpioOut {
