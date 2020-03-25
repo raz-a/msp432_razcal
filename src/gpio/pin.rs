@@ -180,20 +180,14 @@ fn set_pin_function_to_gpio(port: &mut GpioPort, pin_offset: u8) {
 
     let select_status = (*sel1_reg << 1) | *sel0_reg;
     match select_status {
-        1 => {
-            // Clear Select 0.
-            *sel0_reg = 0;
-        }
+        // Clear Select 0.
+        1 => *sel0_reg = 0,
 
-        2 => {
-            // Clear Select 1.
-            *sel1_reg = 0;
-        }
+        // Clear Select 1.
+        2 => *sel1_reg = 0,
 
+        // Use the Select Compliment register to ensure atomic clearing of both Select 0 and 1.
         3 => {
-            // Use the Select Compliment register to ensure atomic clearing of both Select 0 and
-            // Select 1.
-
             let selc_addr = peripheral_to_alias(
                 ((&mut port.compliment_selection) as *mut u16) as u32,
                 pin_offset,
@@ -203,8 +197,6 @@ fn set_pin_function_to_gpio(port: &mut GpioPort, pin_offset: u8) {
             *selc_reg = 1;
         }
 
-        _ => {
-            debug_assert_eq!(select_status, 0);
-        }
+        _ => debug_assert_eq!(select_status, 0),
     }
 }
