@@ -1,11 +1,28 @@
 mod bus;
-mod single;
+mod pin;
 
 pub use bus::*;
-pub use single::*;
+pub use pin::*;
 
 use super::PERIPHERAL_BASE;
 use crate::pin::*;
+
+pub struct Disabled;
+
+pub struct HighImpedance;
+pub struct PullUp;
+pub struct PullDown;
+
+pub struct GpioIn<InputMode> {
+    input_mode: InputMode,
+}
+
+pub struct PushPull;
+pub struct OpenCollector;
+
+pub struct GpioOut<OutputMode> {
+    output_mode: OutputMode,
+}
 
 const PORT_MODULE: u32 = PERIPHERAL_BASE + 0x4C00;
 const PORT_J_OFFSET: u32 = 0x120;
