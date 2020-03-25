@@ -3,12 +3,22 @@ use crate::peripheral_to_alias;
 use crate::pin::Pin;
 
 pub struct GpioPin<GpioConfig> {
-    config: GpioConfig,
+    _config: GpioConfig,
     input: &'static u16,
     output: &'static mut u16,
     direction: &'static mut u16,
     resistor_enable: &'static mut u16,
     pin: Pin,
+}
+
+pub trait GpioPinInput {
+    fn read(&self) -> bool;
+}
+
+pub trait GpioPinOutput {
+    fn set(&mut self);
+    fn clear(&mut self);
+    fn toggle(&mut self);
 }
 
 pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
@@ -25,7 +35,7 @@ pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
 
     let gpio_pin = unsafe {
         GpioPin {
-            config: Disabled,
+            _config: Disabled,
             input: &*(input_addr as *const u16),
             output: &mut *(output_addr as *mut u16),
             direction: &mut *(dir_addr as *mut u16),
@@ -38,12 +48,12 @@ pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
 }
 
 impl<GpioConfig> GpioPin<GpioConfig> {
-    pub fn to_input_highz(self) -> GpioPin<GpioIn<HighImpedance>> {
+    pub fn to_input_highz(self) -> GpioPin<GpioInConfig<HighImpedance>> {
         *self.resistor_enable = 0;
         *self.direction = 0;
         GpioPin {
-            config: GpioIn {
-                input_mode: HighImpedance,
+            _config: GpioInConfig {
+                _input_mode: HighImpedance,
             },
 
             input: self.input,
@@ -54,12 +64,14 @@ impl<GpioConfig> GpioPin<GpioConfig> {
         }
     }
 
-    pub fn to_input_pullup(self) -> GpioPin<GpioIn<PullUp>> {
+    pub fn to_input_pullup(self) -> GpioPin<GpioInConfig<PullUp>> {
         *self.resistor_enable = 1;
         *self.direction = 0;
         *self.output = 1;
         GpioPin {
-            config: GpioIn { input_mode: PullUp },
+            _config: GpioInConfig {
+                _input_mode: PullUp,
+            },
             input: self.input,
             output: self.output,
             direction: self.direction,
@@ -68,13 +80,13 @@ impl<GpioConfig> GpioPin<GpioConfig> {
         }
     }
 
-    pub fn to_input_pulldown(self) -> GpioPin<GpioIn<PullDown>> {
+    pub fn to_input_pulldown(self) -> GpioPin<GpioInConfig<PullDown>> {
         *self.resistor_enable = 1;
         *self.direction = 0;
         *self.output = 0;
         GpioPin {
-            config: GpioIn {
-                input_mode: PullDown,
+            _config: GpioInConfig {
+                _input_mode: PullDown,
             },
             input: self.input,
             output: self.output,
@@ -84,12 +96,12 @@ impl<GpioConfig> GpioPin<GpioConfig> {
         }
     }
 
-    pub fn to_output_pushpull(self) -> GpioPin<GpioOut<PushPull>> {
+    pub fn to_output_pushpull(self) -> GpioPin<GpioOutConfig<PushPull>> {
         *self.output = 0;
         *self.direction = 1;
         GpioPin {
-            config: GpioOut {
-                output_mode: PushPull,
+            _config: GpioOutConfig {
+                _output_mode: PushPull,
             },
             input: self.input,
             output: self.output,
@@ -99,13 +111,13 @@ impl<GpioConfig> GpioPin<GpioConfig> {
         }
     }
 
-    pub fn to_output_opencollector(self) -> GpioPin<GpioOut<OpenCollector>> {
+    pub fn to_output_opencollector(self) -> GpioPin<GpioOutConfig<OpenCollector>> {
         *self.output = 0;
         *self.direction = 1;
         *self.resistor_enable = 1;
         GpioPin {
-            config: GpioOut {
-                output_mode: OpenCollector,
+            _config: GpioOutConfig {
+                _output_mode: OpenCollector,
             },
             input: self.input,
             output: self.output,
@@ -116,38 +128,38 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     }
 }
 
-impl<InputMode> GpioPin<GpioIn<InputMode>> {
-    pub fn read(&self) -> bool {
+impl<InputMode> GpioPinInput for GpioPin<GpioInConfig<InputMode>> {
+    fn read(&self) -> bool {
         *self.input != 0
     }
 }
 
-impl GpioPin<GpioOut<PushPull>> {
-    pub fn set(&mut self) {
+impl GpioPinOutput for GpioPin<GpioOutConfig<PushPull>> {
+    fn set(&mut self) {
         *self.output = 1;
     }
 
-    pub fn clear(&mut self) {
+    fn clear(&mut self) {
         *self.output = 0;
     }
 
-    pub fn toggle(&mut self) {
+    fn toggle(&mut self) {
         *self.output ^= 1;
     }
 }
 
-impl GpioPin<GpioOut<OpenCollector>> {
-    pub fn set(&mut self) {
+impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
+    fn set(&mut self) {
         *self.direction = 0;
         *self.output = 1;
     }
 
-    pub fn clear(&mut self) {
+    fn clear(&mut self) {
         *self.output = 0;
         *self.direction = 1;
     }
 
-    pub fn toggle(&mut self) {
+    fn toggle(&mut self) {
         if *self.input == 0 {
             self.set();
         } else {
@@ -186,6 +198,9 @@ fn set_pin_function_to_gpio(port: &mut GpioPort, pin_offset: u8) {
                 ((&mut port.compliment_selection) as *mut u16) as u32,
                 pin_offset,
             );
+
+            let selc_reg = unsafe { &mut *(selc_addr as *mut u16) };
+            *selc_reg = 1;
         }
 
         _ => {

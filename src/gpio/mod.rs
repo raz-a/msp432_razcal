@@ -13,15 +13,15 @@ pub struct HighImpedance;
 pub struct PullUp;
 pub struct PullDown;
 
-pub struct GpioIn<InputMode> {
-    input_mode: InputMode,
+pub struct GpioInConfig<InputMode> {
+    _input_mode: InputMode,
 }
 
 pub struct PushPull;
 pub struct OpenCollector;
 
-pub struct GpioOut<OutputMode> {
-    output_mode: OutputMode,
+pub struct GpioOutConfig<OutputMode> {
+    _output_mode: OutputMode,
 }
 
 const PORT_MODULE: u32 = PERIPHERAL_BASE + 0x4C00;
