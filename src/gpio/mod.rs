@@ -1,4 +1,4 @@
-//! # Gpio
+//! # GPIO
 //! The `gpio` module includes structures and functions to utilize General Purpose Input and Output
 //! (GPIO) pins.
 
@@ -117,7 +117,7 @@ const PORT_J_OFFSET: u32 = 0x120;
 static mut GPIO_PORT_IN_USE_LOCK: AtomicU16 = AtomicU16::new(0);
 
 #[repr(C)]
-/// Gpio Register layout
+/// GPIO Register layout
 struct GpioPort {
     /// Level of the GPIO pins.
     input: Reg16,
