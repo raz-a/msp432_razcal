@@ -14,7 +14,6 @@ mod pin;
 //
 
 pub use bus::*;
-pub use gpio_typestates::*;
 pub use pin::*;
 
 //
@@ -26,43 +25,44 @@ use crate::pin::*;
 use crate::registers::Reg16;
 use core::sync::atomic::{AtomicU16, Ordering};
 
-/// Represents the different GPIO typestate configurations
-mod gpio_typestates {
-    /// A zero-sized typestate indicating a Disabled GPIO instance configuration. This is the
-    /// default typestate when a new GPIO instance is created.
-    pub struct Disabled;
+//
+// Represents the different GPIO typestate configurations.
+//
 
-    /// A zero-sized typestate indicating a GPIO instance input configuration.
-    /// # Type Options
-    /// `InputMode` indicates the type of input configuration. Can be of type `HighImpedance`,
-    /// `PullUp`, or `PullDown`.
-    pub struct GpioInConfig<InputMode> {
-        _input_mode: InputMode,
-    }
+/// A zero-sized typestate indicating a Disabled GPIO instance configuration. This is the
+/// default typestate when a new GPIO instance is created.
+pub struct Disabled;
 
-    /// A zero-sized typestate indicating a high-Z GPIO instance input configuration.
-    pub struct HighImpedance;
-
-    /// A zero-sized typestate indicating a pull-up resistor GPIO instance input configuration.
-    pub struct PullUp;
-
-    /// A zero-sized typestate indicating a pull-down resistor GPIO instance input configuration.
-    pub struct PullDown;
-
-    /// A zero-sized typestate indicating a GPIO instance output configuration.
-    /// # Type Options
-    /// `OutputMode` indicates the type of output configuration. Can be of type `PushPull` or
-    /// `OpenCollector`.
-    pub struct GpioOutConfig<OutputMode> {
-        _output_mode: OutputMode,
-    }
-
-    /// A zero-sized typestate indicating a push-pull GPIO instance output configuration.
-    pub struct PushPull;
-
-    /// A zero-sized typestate indicating an open collector GPIO instance output configuration.
-    pub struct OpenCollector;
+/// A zero-sized typestate indicating a GPIO instance input configuration.
+/// # Type Options
+/// `InputMode` indicates the type of input configuration. Can be of type `HighImpedance`,
+/// `PullUp`, or `PullDown`.
+pub struct GpioInConfig<InputMode> {
+    _input_mode: InputMode,
 }
+
+/// A zero-sized typestate indicating a high-Z GPIO instance input configuration.
+pub struct HighImpedance;
+
+/// A zero-sized typestate indicating a pull-up resistor GPIO instance input configuration.
+pub struct PullUp;
+
+/// A zero-sized typestate indicating a pull-down resistor GPIO instance input configuration.
+pub struct PullDown;
+
+/// A zero-sized typestate indicating a GPIO instance output configuration.
+/// # Type Options
+/// `OutputMode` indicates the type of output configuration. Can be of type `PushPull` or
+/// `OpenCollector`.
+pub struct GpioOutConfig<OutputMode> {
+    _output_mode: OutputMode,
+}
+
+/// A zero-sized typestate indicating a push-pull GPIO instance output configuration.
+pub struct PushPull;
+
+/// A zero-sized typestate indicating an open collector GPIO instance output configuration.
+pub struct OpenCollector;
 
 //
 // Synchronization
