@@ -1,3 +1,6 @@
+//! # Pin
+//!
+
 use crate::gpio::*;
 use crate::peripheral_to_alias;
 use crate::pin::Pin;
