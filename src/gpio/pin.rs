@@ -2,6 +2,14 @@
 //! The `pin` module includes structures and function to utilize GPIO as single independent pins.
 
 //
+// TODO: Interrupts for Inputs
+//
+
+//
+// TODO: Drive strength for Outputs
+//
+
+//
 // Dependencies
 //
 
@@ -349,6 +357,17 @@ impl<GpioConfig> GpioPortSync for GpioPin<GpioConfig> {
 }
 
 impl<InputMode> GpioPinInput for GpioPin<GpioInConfig<InputMode>> {
+    /// Reads the value of the GPIO pin.
+    ///
+    /// # Returns
+    /// `true` if pin is high.
+    /// `false` if pinis low.
+    fn read(&self) -> bool {
+        *self.input != 0
+    }
+}
+
+impl<OutputMode> GpioPinInput for GpioPin<GpioOutConfig<OutputMode>> {
     /// Reads the value of the GPIO pin.
     ///
     /// # Returns
