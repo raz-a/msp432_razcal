@@ -41,8 +41,8 @@ pub trait GpioPinOutput {
     fn clear(&mut self, _port_sync_token: &mut GpioPortInUseToken);
 
     /// Toggles the GPIO Pin.
-    /// # Arguments
     ///
+    /// # Arguments
     /// `_port_sync_token` - Indicates that no other thread can access the 8-bit GPIO port that
     /// this pin belongs to.
     fn toggle(&mut self, _port_sync_token: &mut GpioPortInUseToken);
