@@ -28,7 +28,7 @@ pub trait GpioPinInput {
     ///
     /// # Returns
     /// `true` if pin is high.
-    /// `false` if pinis low.
+    /// `false` if pin is low.
     fn read(&self) -> bool;
 }
 

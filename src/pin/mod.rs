@@ -1,27 +1,56 @@
+//! # Pin
+//! The `pin` module includes structures and functions to wrap microcontroller pins in borrowable
+//! structures.
+
+//
+// Internal Modules
+//
+
 mod pin;
 mod pinset;
 mod port;
+
+//
+// Reexports
+//
 
 pub use pin::*;
 pub use pinset::*;
 pub use port::*;
 
+//
+// Dependencies
+//
+
 use core::sync::atomic::AtomicU16;
 
+
+/// Represents unique values for each port grouping.
 #[derive(Copy, Clone)]
 pub enum PortName {
+    /// Port A (Port 1 + Port 2)
     PortA = 0,
+
+    /// Port B (Port 3 + Port 4)
     PortB = 1,
+
+    /// Port C (Port 5 + Port 6)
     PortC = 2,
+
+    /// Port D (Port 7 + Port 8)
     PortD = 3,
+
+    /// Port E (Port 9 + Port 10)
     PortE = 4,
+
+    /// Port J
     PortJ = 5,
 }
 
+/// Represents unique values for each pin.
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
 pub enum PinName {
-    /// Port A (Port 1 + Port 2)
     PA_0 = pin_name(PortName::PortA, 0),
     PA_1 = pin_name(PortName::PortA, 1),
     PA_2 = pin_name(PortName::PortA, 2),
@@ -38,8 +67,6 @@ pub enum PinName {
     PA_13 = pin_name(PortName::PortA, 13),
     PA_14 = pin_name(PortName::PortA, 14),
     PA_15 = pin_name(PortName::PortA, 15),
-
-    /// Port B (Port 3 + Port 4)
     PB_0 = pin_name(PortName::PortB, 0),
     PB_1 = pin_name(PortName::PortB, 1),
     PB_2 = pin_name(PortName::PortB, 2),
@@ -56,8 +83,6 @@ pub enum PinName {
     PB_13 = pin_name(PortName::PortB, 13),
     PB_14 = pin_name(PortName::PortB, 14),
     PB_15 = pin_name(PortName::PortB, 15),
-
-    /// Port C (Port 5 + Port 6)
     PC_0 = pin_name(PortName::PortC, 0),
     PC_1 = pin_name(PortName::PortC, 1),
     PC_2 = pin_name(PortName::PortC, 2),
@@ -74,8 +99,6 @@ pub enum PinName {
     PC_13 = pin_name(PortName::PortC, 13),
     PC_14 = pin_name(PortName::PortC, 14),
     PC_15 = pin_name(PortName::PortC, 15),
-
-    /// Port D (Port 7 + Port 8)
     PD_0 = pin_name(PortName::PortD, 0),
     PD_1 = pin_name(PortName::PortD, 1),
     PD_2 = pin_name(PortName::PortD, 2),
@@ -92,8 +115,6 @@ pub enum PinName {
     PD_13 = pin_name(PortName::PortD, 13),
     PD_14 = pin_name(PortName::PortD, 14),
     PD_15 = pin_name(PortName::PortD, 15),
-
-    /// Port E (Port 9 + Port 10)
     PE_0 = pin_name(PortName::PortE, 0),
     PE_1 = pin_name(PortName::PortE, 1),
     PE_2 = pin_name(PortName::PortE, 2),
@@ -110,8 +131,6 @@ pub enum PinName {
     PE_13 = pin_name(PortName::PortE, 13),
     PE_14 = pin_name(PortName::PortE, 14),
     PE_15 = pin_name(PortName::PortE, 15),
-
-    /// Port J
     PJ_0 = pin_name(PortName::PortJ, 0),
     PJ_1 = pin_name(PortName::PortJ, 1),
     PJ_2 = pin_name(PortName::PortJ, 2),
@@ -120,9 +139,8 @@ pub enum PinName {
     PJ_5 = pin_name(PortName::PortJ, 5),
 }
 
+/// Pin Aliases
 impl PinName {
-    /// Pin Aliases
-
     pub const P1_0: PinName = PinName::PA_0;
     pub const P1_1: PinName = PinName::PA_1;
     pub const P1_2: PinName = PinName::PA_2;
@@ -131,7 +149,6 @@ impl PinName {
     pub const P1_5: PinName = PinName::PA_5;
     pub const P1_6: PinName = PinName::PA_6;
     pub const P1_7: PinName = PinName::PA_7;
-
     pub const P2_0: PinName = PinName::PA_8;
     pub const P2_1: PinName = PinName::PA_9;
     pub const P2_2: PinName = PinName::PA_10;
@@ -140,7 +157,6 @@ impl PinName {
     pub const P2_5: PinName = PinName::PA_13;
     pub const P2_6: PinName = PinName::PA_14;
     pub const P2_7: PinName = PinName::PA_15;
-
     pub const P3_0: PinName = PinName::PB_0;
     pub const P3_1: PinName = PinName::PB_1;
     pub const P3_2: PinName = PinName::PB_2;
@@ -149,7 +165,6 @@ impl PinName {
     pub const P3_5: PinName = PinName::PB_5;
     pub const P3_6: PinName = PinName::PB_6;
     pub const P3_7: PinName = PinName::PB_7;
-
     pub const P4_0: PinName = PinName::PB_8;
     pub const P4_1: PinName = PinName::PB_9;
     pub const P4_2: PinName = PinName::PB_10;
@@ -158,7 +173,6 @@ impl PinName {
     pub const P4_5: PinName = PinName::PB_13;
     pub const P4_6: PinName = PinName::PB_14;
     pub const P4_7: PinName = PinName::PB_15;
-
     pub const P5_0: PinName = PinName::PC_0;
     pub const P5_1: PinName = PinName::PC_1;
     pub const P5_2: PinName = PinName::PC_2;
@@ -167,7 +181,6 @@ impl PinName {
     pub const P5_5: PinName = PinName::PC_5;
     pub const P5_6: PinName = PinName::PC_6;
     pub const P5_7: PinName = PinName::PC_7;
-
     pub const P6_0: PinName = PinName::PC_8;
     pub const P6_1: PinName = PinName::PC_9;
     pub const P6_2: PinName = PinName::PC_10;
@@ -176,7 +189,6 @@ impl PinName {
     pub const P6_5: PinName = PinName::PC_13;
     pub const P6_6: PinName = PinName::PC_14;
     pub const P6_7: PinName = PinName::PC_15;
-
     pub const P7_0: PinName = PinName::PD_0;
     pub const P7_1: PinName = PinName::PD_1;
     pub const P7_2: PinName = PinName::PD_2;
@@ -185,7 +197,6 @@ impl PinName {
     pub const P7_5: PinName = PinName::PD_5;
     pub const P7_6: PinName = PinName::PD_6;
     pub const P7_7: PinName = PinName::PD_7;
-
     pub const P8_0: PinName = PinName::PD_8;
     pub const P8_1: PinName = PinName::PD_9;
     pub const P8_2: PinName = PinName::PD_10;
@@ -194,7 +205,6 @@ impl PinName {
     pub const P8_5: PinName = PinName::PD_13;
     pub const P8_6: PinName = PinName::PD_14;
     pub const P8_7: PinName = PinName::PD_15;
-
     pub const P9_0: PinName = PinName::PE_0;
     pub const P9_1: PinName = PinName::PE_1;
     pub const P9_2: PinName = PinName::PE_2;
@@ -203,7 +213,6 @@ impl PinName {
     pub const P9_5: PinName = PinName::PE_5;
     pub const P9_6: PinName = PinName::PE_6;
     pub const P9_7: PinName = PinName::PE_7;
-
     pub const P10_0: PinName = PinName::PE_8;
     pub const P10_1: PinName = PinName::PE_9;
     pub const P10_2: PinName = PinName::PE_10;
@@ -221,6 +230,11 @@ impl PinName {
 )))]
 compile_error!("Msp432 package must be defined.");
 
+//
+// Globals
+//
+
+/// Represents the pins available for the given controller.
 #[cfg(msp432_package = "vqfn")]
 static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0x0FFF),
@@ -231,6 +245,7 @@ static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0x003F),
 ];
 
+/// Represents the pins available for the given controller.
 #[cfg(msp432_package = "nfbga")]
 static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0xFFFF),
@@ -241,6 +256,7 @@ static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0x003F),
 ];
 
+/// Represents the pins available for the given controller.
 #[cfg(msp432_package = "lqfp")]
 static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0xFFFF),
@@ -251,14 +267,40 @@ static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0x003F),
 ];
 
+//
+// Module Private Functions.
+//
+
+/// Calculate the PinName from a PortName and pin offset.
+///
+/// # Arguments
+/// `port` - Provides the port name.
+/// `pin` - Provides the pin offset.
+///
+/// # Returns
+/// The concatenated PinName.
 const fn pin_name(port: PortName, pin: u8) -> isize {
     (port as isize) << 8 | (pin as isize)
 }
 
+/// Extracts the port number from a PinName.
+///
+/// # Arguments
+/// `pin_name` - Provides the PinName.
+///
+/// # Returns
+/// The port number.
 const fn extract_port_number(pin_name: PinName) -> u8 {
     ((pin_name as u16) >> 8) as u8
 }
 
+/// Extracts the pin offset from a PinName.
+///
+/// # Arguments
+/// `pin_name` - Provides the PinName.
+///
+/// # Returns
+/// The pin offset.
 const fn extract_pin_number(pin_name: PinName) -> u8 {
     ((pin_name as u16) & 0xFF) as u8
 }
