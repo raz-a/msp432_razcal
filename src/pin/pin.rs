@@ -1,11 +1,33 @@
+//! # Pin
+//! The `pin` module includes structures and functions to abstract pins as software resources.
+//
+
+//
+// Dependencies
+//
+
 use super::{extract_pin_number, extract_port_number, PinName, PORT_PINS_AVAILABLE};
 use core::sync::atomic::Ordering;
 
+//
+// Structures
+//
+
+/// Represents a pin to the MCU.
 pub struct Pin {
+    /// The unique identifier for the pin.
     pin: PinName,
 }
 
 impl Pin {
+    /// Creates a new Pin structure.
+    ///
+    /// # Arguments
+    /// `pin` - Provides the unique identifier for the pin to be created.
+    ///
+    /// # Returns
+    /// Some(Pin) - If the pin is available.\
+    /// None - If a pin with the same PinName already exists.
     pub fn new(pin: PinName) -> Option<Self> {
         let port = extract_port_number(pin) as usize;
         let pin_mask = 1 << extract_pin_number(pin);
@@ -22,20 +44,33 @@ impl Pin {
         Some(Pin { pin: pin })
     }
 
+    /// Gets the uniquie identifier for this pin.
+    ///
+    /// # Returns
+    /// PinName
     pub fn get_pin(&self) -> PinName {
         self.pin
     }
 
+    /// Gets the port that this pin belongs to.
+    ///
+    /// # Returns
+    /// PortName
     pub fn get_port(&self) -> u8 {
         extract_port_number(self.pin)
     }
 
+    /// Gets this pin's offset in the port it belongs to.
+    ///
+    /// # Returns
+    /// PinOffset
     pub fn get_pin_offset_in_port(&self) -> u8 {
         extract_pin_number(self.pin)
     }
 }
 
 impl Drop for Pin {
+    /// Drops the Pin structure and marks the pin as available.
     fn drop(&mut self) {
         let port = extract_port_number(self.pin) as usize;
         let pin_mask = 1 << extract_pin_number(self.pin);

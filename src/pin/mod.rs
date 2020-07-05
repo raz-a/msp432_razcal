@@ -7,7 +7,6 @@
 //
 
 mod pin;
-mod pinset;
 mod port;
 
 //
@@ -15,7 +14,6 @@ mod port;
 //
 
 pub use pin::*;
-pub use pinset::*;
 pub use port::*;
 
 //
