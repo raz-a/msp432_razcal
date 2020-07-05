@@ -6,7 +6,7 @@
 // Dependencies
 //
 
-use super::{extract_pin_number, extract_port_number, PinName, PORT_PINS_AVAILABLE};
+use super::{PinName, PinOffset, PortName, PORT_PINS_AVAILABLE};
 use core::sync::atomic::Ordering;
 
 //
@@ -29,8 +29,8 @@ impl Pin {
     /// Some(Pin) - If the pin is available.\
     /// None - If a pin with the same PinName already exists.
     pub fn new(pin: PinName) -> Option<Self> {
-        let port = extract_port_number(pin) as usize;
-        let pin_mask = 1 << extract_pin_number(pin);
+        let port = pin.port_name as usize;
+        let pin_mask = 1 << (pin.pin_offset as usize);
         let value = unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port)
@@ -56,24 +56,24 @@ impl Pin {
     ///
     /// # Returns
     /// PortName
-    pub fn get_port(&self) -> u8 {
-        extract_port_number(self.pin)
+    pub fn get_port(&self) -> PortName {
+        self.pin.port_name
     }
 
     /// Gets this pin's offset in the port it belongs to.
     ///
     /// # Returns
     /// PinOffset
-    pub fn get_pin_offset_in_port(&self) -> u8 {
-        extract_pin_number(self.pin)
+    pub fn get_pin_offset_in_port(&self) -> PinOffset {
+        self.pin.pin_offset
     }
 }
 
 impl Drop for Pin {
     /// Drops the Pin structure and marks the pin as available.
     fn drop(&mut self) {
-        let port = extract_port_number(self.pin) as usize;
-        let pin_mask = 1 << extract_pin_number(self.pin);
+        let port = self.pin.port_name as usize;
+        let pin_mask = 1 << (self.pin.pin_offset as usize);
         unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port)

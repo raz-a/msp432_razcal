@@ -1,5 +1,5 @@
 //! # Pin
-//! The `pin` module includes structures and function to utilize GPIO as single independent pins.
+//! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
 // TODO: Interrupts for Inputs
@@ -538,7 +538,7 @@ impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
 /// # Returns
 /// A GPIO Pin in the `Disabled` configuration.
 pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
-    let pin_offset = pin.get_pin_offset_in_port();
+    let pin_offset = pin.get_pin_offset_in_port() as u8;
     let addr = get_port_address(&pin);
     let port = unsafe { &mut *(addr as *mut GpioPort) };
 
@@ -551,8 +551,8 @@ pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
         pin_offset,
     );
 
-    let in_use_shift = pin.get_port() * 2;
-    let in_use_mask = if pin.get_pin_offset_in_port() > 7 {
+    let in_use_shift = pin.get_port() as u8 * 2;
+    let in_use_mask = if pin_offset > 7 {
         0x2
     } else {
         0x1

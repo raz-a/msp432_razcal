@@ -45,96 +45,127 @@ pub enum PortName {
     PortJ = 5,
 }
 
+/// Represents the offset of a pin into its containing port.
+#[derive(Copy, Clone)]
+pub enum PinOffset {
+    Offset0 = 0,
+    Offset1 = 1,
+    Offset2 = 2,
+    Offset3 = 3,
+    Offset4 = 4,
+    Offset5 = 5,
+    Offset6 = 6,
+    Offset7 = 7,
+    Offset8 = 8,
+    Offset9 = 9,
+    Offset10 = 10,
+    Offset11 = 11,
+    Offset12 = 12,
+    Offset13 = 13,
+    Offset14 = 14,
+    Offset15 = 15,
+}
+
 /// Represents unique values for each pin.
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone)]
-pub enum PinName {
-    PA_0 = pin_name(PortName::PortA, 0),
-    PA_1 = pin_name(PortName::PortA, 1),
-    PA_2 = pin_name(PortName::PortA, 2),
-    PA_3 = pin_name(PortName::PortA, 3),
-    PA_4 = pin_name(PortName::PortA, 4),
-    PA_5 = pin_name(PortName::PortA, 5),
-    PA_6 = pin_name(PortName::PortA, 6),
-    PA_7 = pin_name(PortName::PortA, 7),
-    PA_8 = pin_name(PortName::PortA, 8),
-    PA_9 = pin_name(PortName::PortA, 9),
-    PA_10 = pin_name(PortName::PortA, 10),
-    PA_11 = pin_name(PortName::PortA, 11),
-    PA_12 = pin_name(PortName::PortA, 12),
-    PA_13 = pin_name(PortName::PortA, 13),
-    PA_14 = pin_name(PortName::PortA, 14),
-    PA_15 = pin_name(PortName::PortA, 15),
-    PB_0 = pin_name(PortName::PortB, 0),
-    PB_1 = pin_name(PortName::PortB, 1),
-    PB_2 = pin_name(PortName::PortB, 2),
-    PB_3 = pin_name(PortName::PortB, 3),
-    PB_4 = pin_name(PortName::PortB, 4),
-    PB_5 = pin_name(PortName::PortB, 5),
-    PB_6 = pin_name(PortName::PortB, 6),
-    PB_7 = pin_name(PortName::PortB, 7),
-    PB_8 = pin_name(PortName::PortB, 8),
-    PB_9 = pin_name(PortName::PortB, 9),
-    PB_10 = pin_name(PortName::PortB, 10),
-    PB_11 = pin_name(PortName::PortB, 11),
-    PB_12 = pin_name(PortName::PortB, 12),
-    PB_13 = pin_name(PortName::PortB, 13),
-    PB_14 = pin_name(PortName::PortB, 14),
-    PB_15 = pin_name(PortName::PortB, 15),
-    PC_0 = pin_name(PortName::PortC, 0),
-    PC_1 = pin_name(PortName::PortC, 1),
-    PC_2 = pin_name(PortName::PortC, 2),
-    PC_3 = pin_name(PortName::PortC, 3),
-    PC_4 = pin_name(PortName::PortC, 4),
-    PC_5 = pin_name(PortName::PortC, 5),
-    PC_6 = pin_name(PortName::PortC, 6),
-    PC_7 = pin_name(PortName::PortC, 7),
-    PC_8 = pin_name(PortName::PortC, 8),
-    PC_9 = pin_name(PortName::PortC, 9),
-    PC_10 = pin_name(PortName::PortC, 10),
-    PC_11 = pin_name(PortName::PortC, 11),
-    PC_12 = pin_name(PortName::PortC, 12),
-    PC_13 = pin_name(PortName::PortC, 13),
-    PC_14 = pin_name(PortName::PortC, 14),
-    PC_15 = pin_name(PortName::PortC, 15),
-    PD_0 = pin_name(PortName::PortD, 0),
-    PD_1 = pin_name(PortName::PortD, 1),
-    PD_2 = pin_name(PortName::PortD, 2),
-    PD_3 = pin_name(PortName::PortD, 3),
-    PD_4 = pin_name(PortName::PortD, 4),
-    PD_5 = pin_name(PortName::PortD, 5),
-    PD_6 = pin_name(PortName::PortD, 6),
-    PD_7 = pin_name(PortName::PortD, 7),
-    PD_8 = pin_name(PortName::PortD, 8),
-    PD_9 = pin_name(PortName::PortD, 9),
-    PD_10 = pin_name(PortName::PortD, 10),
-    PD_11 = pin_name(PortName::PortD, 11),
-    PD_12 = pin_name(PortName::PortD, 12),
-    PD_13 = pin_name(PortName::PortD, 13),
-    PD_14 = pin_name(PortName::PortD, 14),
-    PD_15 = pin_name(PortName::PortD, 15),
-    PE_0 = pin_name(PortName::PortE, 0),
-    PE_1 = pin_name(PortName::PortE, 1),
-    PE_2 = pin_name(PortName::PortE, 2),
-    PE_3 = pin_name(PortName::PortE, 3),
-    PE_4 = pin_name(PortName::PortE, 4),
-    PE_5 = pin_name(PortName::PortE, 5),
-    PE_6 = pin_name(PortName::PortE, 6),
-    PE_7 = pin_name(PortName::PortE, 7),
-    PE_8 = pin_name(PortName::PortE, 8),
-    PE_9 = pin_name(PortName::PortE, 9),
-    PE_10 = pin_name(PortName::PortE, 10),
-    PE_11 = pin_name(PortName::PortE, 11),
-    PE_12 = pin_name(PortName::PortE, 12),
-    PE_13 = pin_name(PortName::PortE, 13),
-    PE_14 = pin_name(PortName::PortE, 14),
-    PE_15 = pin_name(PortName::PortE, 15),
-    PJ_0 = pin_name(PortName::PortJ, 0),
-    PJ_1 = pin_name(PortName::PortJ, 1),
-    PJ_2 = pin_name(PortName::PortJ, 2),
-    PJ_3 = pin_name(PortName::PortJ, 3),
-    PJ_4 = pin_name(PortName::PortJ, 4),
-    PJ_5 = pin_name(PortName::PortJ, 5),
+pub struct PinName {
+    port_name: PortName,
+    pin_offset: PinOffset
+}
+
+impl PinName {
+    pub const PA_0: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset0 };
+    pub const PA_1: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset1 };
+    pub const PA_2: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset2 };
+    pub const PA_3: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset3 };
+    pub const PA_4: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset4 };
+    pub const PA_5: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset5 };
+    pub const PA_6: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset6 };
+    pub const PA_7: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset7 };
+    pub const PA_8: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset8 };
+    pub const PA_9: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset9 };
+    pub const PA_10: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset10 };
+    pub const PA_11: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset11 };
+    pub const PA_12: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset12 };
+    pub const PA_13: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset13 };
+    pub const PA_14: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset14 };
+    pub const PA_15: PinName = PinName { port_name: PortName::PortA, pin_offset: PinOffset::Offset15 };
+
+    pub const PB_0: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset0 };
+    pub const PB_1: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset1 };
+    pub const PB_2: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset2 };
+    pub const PB_3: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset3 };
+    pub const PB_4: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset4 };
+    pub const PB_5: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset5 };
+    pub const PB_6: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset6 };
+    pub const PB_7: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset7 };
+    pub const PB_8: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset8 };
+    pub const PB_9: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset9 };
+    pub const PB_10: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset10 };
+    pub const PB_11: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset11 };
+    pub const PB_12: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset12 };
+    pub const PB_13: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset13 };
+    pub const PB_14: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset14 };
+    pub const PB_15: PinName = PinName { port_name: PortName::PortB, pin_offset: PinOffset::Offset15 };
+
+    pub const PC_0: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset0 };
+    pub const PC_1: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset1 };
+    pub const PC_2: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset2 };
+    pub const PC_3: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset3 };
+    pub const PC_4: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset4 };
+    pub const PC_5: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset5 };
+    pub const PC_6: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset6 };
+    pub const PC_7: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset7 };
+    pub const PC_8: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset8 };
+    pub const PC_9: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset9 };
+    pub const PC_10: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset10 };
+    pub const PC_11: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset11 };
+    pub const PC_12: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset12 };
+    pub const PC_13: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset13 };
+    pub const PC_14: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset14 };
+    pub const PC_15: PinName = PinName { port_name: PortName::PortC, pin_offset: PinOffset::Offset15 };
+
+    pub const PD_0: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset0 };
+    pub const PD_1: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset1 };
+    pub const PD_2: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset2 };
+    pub const PD_3: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset3 };
+    pub const PD_4: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset4 };
+    pub const PD_5: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset5 };
+    pub const PD_6: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset6 };
+    pub const PD_7: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset7 };
+    pub const PD_8: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset8 };
+    pub const PD_9: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset9 };
+    pub const PD_10: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset10 };
+    pub const PD_11: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset11 };
+    pub const PD_12: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset12 };
+    pub const PD_13: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset13 };
+    pub const PD_14: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset14 };
+    pub const PD_15: PinName = PinName { port_name: PortName::PortD, pin_offset: PinOffset::Offset15 };
+
+    pub const PE_0: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset0 };
+    pub const PE_1: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset1 };
+    pub const PE_2: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset2 };
+    pub const PE_3: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset3 };
+    pub const PE_4: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset4 };
+    pub const PE_5: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset5 };
+    pub const PE_6: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset6 };
+    pub const PE_7: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset7 };
+    pub const PE_8: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset8 };
+    pub const PE_9: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset9 };
+    pub const PE_10: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset10 };
+    pub const PE_11: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset11 };
+    pub const PE_12: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset12 };
+    pub const PE_13: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset13 };
+    pub const PE_14: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset14 };
+    pub const PE_15: PinName = PinName { port_name: PortName::PortE, pin_offset: PinOffset::Offset15 };
+
+    pub const PJ_0: PinName = PinName { port_name: PortName::PortJ, pin_offset: PinOffset::Offset0 };
+    pub const PJ_1: PinName = PinName { port_name: PortName::PortJ, pin_offset: PinOffset::Offset1 };
+    pub const PJ_2: PinName = PinName { port_name: PortName::PortJ, pin_offset: PinOffset::Offset2 };
+    pub const PJ_3: PinName = PinName { port_name: PortName::PortJ, pin_offset: PinOffset::Offset3 };
+    pub const PJ_4: PinName = PinName { port_name: PortName::PortJ, pin_offset: PinOffset::Offset4 };
+    pub const PJ_5: PinName = PinName { port_name: PortName::PortJ, pin_offset: PinOffset::Offset5 };
 }
 
 /// Pin Aliases
@@ -147,6 +178,7 @@ impl PinName {
     pub const P1_5: PinName = PinName::PA_5;
     pub const P1_6: PinName = PinName::PA_6;
     pub const P1_7: PinName = PinName::PA_7;
+
     pub const P2_0: PinName = PinName::PA_8;
     pub const P2_1: PinName = PinName::PA_9;
     pub const P2_2: PinName = PinName::PA_10;
@@ -155,6 +187,7 @@ impl PinName {
     pub const P2_5: PinName = PinName::PA_13;
     pub const P2_6: PinName = PinName::PA_14;
     pub const P2_7: PinName = PinName::PA_15;
+
     pub const P3_0: PinName = PinName::PB_0;
     pub const P3_1: PinName = PinName::PB_1;
     pub const P3_2: PinName = PinName::PB_2;
@@ -163,6 +196,7 @@ impl PinName {
     pub const P3_5: PinName = PinName::PB_5;
     pub const P3_6: PinName = PinName::PB_6;
     pub const P3_7: PinName = PinName::PB_7;
+
     pub const P4_0: PinName = PinName::PB_8;
     pub const P4_1: PinName = PinName::PB_9;
     pub const P4_2: PinName = PinName::PB_10;
@@ -171,6 +205,7 @@ impl PinName {
     pub const P4_5: PinName = PinName::PB_13;
     pub const P4_6: PinName = PinName::PB_14;
     pub const P4_7: PinName = PinName::PB_15;
+
     pub const P5_0: PinName = PinName::PC_0;
     pub const P5_1: PinName = PinName::PC_1;
     pub const P5_2: PinName = PinName::PC_2;
@@ -179,6 +214,7 @@ impl PinName {
     pub const P5_5: PinName = PinName::PC_5;
     pub const P5_6: PinName = PinName::PC_6;
     pub const P5_7: PinName = PinName::PC_7;
+
     pub const P6_0: PinName = PinName::PC_8;
     pub const P6_1: PinName = PinName::PC_9;
     pub const P6_2: PinName = PinName::PC_10;
@@ -187,6 +223,7 @@ impl PinName {
     pub const P6_5: PinName = PinName::PC_13;
     pub const P6_6: PinName = PinName::PC_14;
     pub const P6_7: PinName = PinName::PC_15;
+
     pub const P7_0: PinName = PinName::PD_0;
     pub const P7_1: PinName = PinName::PD_1;
     pub const P7_2: PinName = PinName::PD_2;
@@ -195,6 +232,7 @@ impl PinName {
     pub const P7_5: PinName = PinName::PD_5;
     pub const P7_6: PinName = PinName::PD_6;
     pub const P7_7: PinName = PinName::PD_7;
+
     pub const P8_0: PinName = PinName::PD_8;
     pub const P8_1: PinName = PinName::PD_9;
     pub const P8_2: PinName = PinName::PD_10;
@@ -203,6 +241,7 @@ impl PinName {
     pub const P8_5: PinName = PinName::PD_13;
     pub const P8_6: PinName = PinName::PD_14;
     pub const P8_7: PinName = PinName::PD_15;
+
     pub const P9_0: PinName = PinName::PE_0;
     pub const P9_1: PinName = PinName::PE_1;
     pub const P9_2: PinName = PinName::PE_2;
@@ -211,6 +250,7 @@ impl PinName {
     pub const P9_5: PinName = PinName::PE_5;
     pub const P9_6: PinName = PinName::PE_6;
     pub const P9_7: PinName = PinName::PE_7;
+
     pub const P10_0: PinName = PinName::PE_8;
     pub const P10_1: PinName = PinName::PE_9;
     pub const P10_2: PinName = PinName::PE_10;
@@ -264,41 +304,3 @@ static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0xFFFF),
     AtomicU16::new(0x003F),
 ];
-
-//
-// Module Private Functions.
-//
-
-/// Calculate the PinName from a PortName and pin offset.
-///
-/// # Arguments
-/// `port` - Provides the port name.
-/// `pin` - Provides the pin offset.
-///
-/// # Returns
-/// The concatenated PinName.
-const fn pin_name(port: PortName, pin: u8) -> isize {
-    (port as isize) << 8 | (pin as isize)
-}
-
-/// Extracts the port number from a PinName.
-///
-/// # Arguments
-/// `pin_name` - Provides the PinName.
-///
-/// # Returns
-/// The port number.
-const fn extract_port_number(pin_name: PinName) -> u8 {
-    ((pin_name as u16) >> 8) as u8
-}
-
-/// Extracts the pin offset from a PinName.
-///
-/// # Arguments
-/// `pin_name` - Provides the PinName.
-///
-/// # Returns
-/// The pin offset.
-const fn extract_pin_number(pin_name: PinName) -> u8 {
-    ((pin_name as u16) & 0xFF) as u8
-}
