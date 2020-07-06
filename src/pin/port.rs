@@ -12,7 +12,10 @@ use core::sync::atomic::Ordering;
 // Constants
 //
 
+/// The number of pins in a port.
 const NUM_PINS_IN_PORT: usize = 16;
+
+/// A mask that represents all pins in the port.
 const ALL_PINS_IN_PORT: u16 = (((1 as usize) << NUM_PINS_IN_PORT) - 1) as u16;
 
 //
