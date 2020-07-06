@@ -1,6 +1,5 @@
 //! # Pin
 //! The `pin` module includes structures and functions to abstract pins as software resources.
-//
 
 //
 // Dependencies
