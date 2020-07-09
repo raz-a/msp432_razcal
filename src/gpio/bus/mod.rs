@@ -82,7 +82,7 @@ pub trait GpioBusOutput {
     /// # Unsafe
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
-    fn write_no_sync(&mut self, value: usize);
+    unsafe fn write_no_sync(&mut self, value: usize);
 
     /// Sets bits on the GPIO Bus.
     ///
@@ -92,7 +92,7 @@ pub trait GpioBusOutput {
     /// # Unsafe
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
-    fn set_bits_no_sync(&mut self, set_mask: usize);
+    unsafe fn set_bits_no_sync(&mut self, set_mask: usize);
 
     /// Clears bits on the GPIO Bus.
     ///
@@ -102,7 +102,7 @@ pub trait GpioBusOutput {
     /// # Unsafe
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
-    fn clear_bits_no_sync(&mut self, clear_mask: usize);
+    unsafe fn clear_bits_no_sync(&mut self, clear_mask: usize);
 
     /// Toggles bits on the GPIO Bus.
     ///
@@ -112,5 +112,5 @@ pub trait GpioBusOutput {
     /// # Unsafe
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
-    fn toggle_bits_no_sync(&mut self, toggle_mask: usize);
+    unsafe fn toggle_bits_no_sync(&mut self, toggle_mask: usize);
 }
