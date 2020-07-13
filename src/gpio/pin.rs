@@ -16,7 +16,7 @@
 use crate::gpio::*;
 use crate::peripheral_to_alias;
 use crate::pin::Pin;
-use core::sync::atomic::Ordering;
+use core::sync::atomic::{compiler_fence, Ordering};
 
 //
 // Traits
@@ -499,6 +499,7 @@ impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
     /// same 8-bit port as this pin.
     unsafe fn set_no_sync(&mut self) {
         *self.direction = 0;
+        compiler_fence(Ordering::SeqCst);
         *self.output = 1;
     }
 
@@ -509,6 +510,7 @@ impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
     /// same 8-bit port as this pin.
     unsafe fn clear_no_sync(&mut self) {
         *self.output = 0;
+        compiler_fence(Ordering::SeqCst);
         *self.direction = 1;
     }
 

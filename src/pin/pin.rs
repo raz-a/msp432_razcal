@@ -33,7 +33,7 @@ impl Pin {
         let value = unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port)
-                .fetch_nand(pin_mask, Ordering::Relaxed)
+                .fetch_and(!pin_mask, Ordering::Relaxed)
         };
 
         if value & pin_mask == 0 {

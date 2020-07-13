@@ -80,7 +80,7 @@ impl Drop for GpioPortInUseToken {
         // UNSAFE: Mutable global is being written to. Safety ensured by using an atomic operation.
         //
 
-        unsafe { GPIO_PORT_IN_USE_LOCK.fetch_nand(self.free_mask, Ordering::Relaxed) };
+        unsafe { GPIO_PORT_IN_USE_LOCK.fetch_and(!self.free_mask, Ordering::Relaxed) };
     }
 }
 

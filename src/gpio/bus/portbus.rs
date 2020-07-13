@@ -7,10 +7,11 @@
 
 use super::{GpioBusInput, GpioBusOutput};
 use crate::gpio::{
-    GpioInConfig, GpioOutConfig, GpioPort, GpioPortInUseToken, GpioPortSync, HighImpedance,
-    OpenCollector, PullDown, PullUp, PushPull,
+    Disabled, GpioInConfig, GpioOutConfig, GpioPort, GpioPortInUseToken, GpioPortSync,
+    HighImpedance, OpenCollector, PullDown, PullUp, PushPull,
 };
 use crate::pin::Port;
+use core::sync::atomic::{compiler_fence, Ordering};
 
 //
 // Constants
@@ -306,7 +307,19 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
     unsafe fn write_no_sync(&mut self, value: usize) {
-        todo!();
+        let current_state = self.port_regs.direction.get_halfword();
+
+        let cleared_bits = current_state & !value as u16;
+        self.port_regs.direction.set_halfword(cleared_bits);
+
+        compiler_fence(Ordering::SeqCst);
+
+        self.port_regs.output.set_halfword(value as u16);
+
+        compiler_fence(Ordering::SeqCst);
+
+        let set_bits = cleared_bits | value as u16;
+        self.port_regs.direction.set_halfword(set_bits);
     }
 
     /// Sets bits on the GPIO Bus.
@@ -318,7 +331,14 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
     unsafe fn set_bits_no_sync(&mut self, set_mask: usize) {
-        todo!();
+        // Set bits as input before changing the output register.
+        let dir_value = self.port_regs.direction.get_halfword() & !set_mask as u16;
+        self.port_regs.direction.set_halfword(dir_value);
+
+        compiler_fence(Ordering::SeqCst);
+
+        let out_value = self.port_regs.output.get_halfword() | set_mask as u16;
+        self.port_regs.output.set_halfword(out_value);
     }
 
     /// Clears bits on the GPIO Bus.
@@ -330,7 +350,14 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
     unsafe fn clear_bits_no_sync(&mut self, clear_mask: usize) {
-        todo!();
+        // Set bits as pull-down before changing direction.
+        let out_value = self.port_regs.output.get_halfword() & !clear_mask as u16;
+        self.port_regs.output.set_halfword(out_value);
+
+        compiler_fence(Ordering::SeqCst);
+
+        let dir_value = self.port_regs.direction.get_halfword() | clear_mask as u16;
+        self.port_regs.direction.set_halfword(dir_value);
     }
 
     /// Toggles bits on the GPIO Bus.
@@ -342,6 +369,15 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
     /// This function is safe to use only if there are no active GPIO pins or buses that are in the
     /// same port as this bus.
     unsafe fn toggle_bits_no_sync(&mut self, toggle_mask: usize) {
-        todo!();
+        let value = self.port_regs.output.get_halfword() ^ toggle_mask as u16;
+        self.write_no_sync(value as usize);
     }
+}
+
+//
+// Public functions.
+//
+
+pub fn gpio_port_bus_new(port: Port) -> GpioPortBus<Disabled> {
+    todo!();
 }

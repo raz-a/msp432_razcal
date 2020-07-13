@@ -42,7 +42,7 @@ impl Port {
         let value = unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port_index)
-                .fetch_nand(ALL_PINS_IN_PORT, Ordering::Relaxed)
+                .fetch_and(!ALL_PINS_IN_PORT, Ordering::Relaxed)
         };
 
         if value == ALL_PINS_IN_PORT {
