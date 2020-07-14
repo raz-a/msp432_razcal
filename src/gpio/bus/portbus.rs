@@ -11,7 +11,6 @@ use crate::gpio::{
     GpioPortSync, HighImpedance, OpenCollector, PullDown, PullUp, PushPull, GPIO_PORT_IN_USE_LOCK,
 };
 use crate::pin::Port;
-use core::mem::forget;
 use core::sync::atomic::{compiler_fence, Ordering};
 
 //
@@ -51,18 +50,14 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     pub fn to_input_highz(self) -> GpioPortBus<GpioInConfig<HighImpedance>> {
         self.port_regs.resistor_enable.set_halfword(0);
         self.port_regs.direction.set_halfword(0);
-        let bus = GpioPortBus {
+        GpioPortBus {
             _config: GpioInConfig {
                 _input_mode: HighImpedance,
             },
 
             port_regs: self.port_regs,
             port: self.port,
-        };
-
-        //forget(self);
-
-        bus
+        }
     }
 
     /// Convert this port into an input bus with pull-up resistors.
@@ -394,16 +389,6 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
     }
 }
 
-// impl<GpioConfig> Drop for GpioPortBus<GpioConfig> {
-//     fn drop(&mut self) {
-//         let in_use_mask = 0x3 << self.port.get_name() as u8 * 2;
-//         let previous_value =
-//             unsafe { GPIO_PORT_IN_USE_LOCK.fetch_and(!in_use_mask, Ordering::Relaxed) };
-
-//         debug_assert_ne!(previous_value & in_use_mask, 0);
-//     }
-// }
-
 //
 // Public functions.
 //
@@ -411,17 +396,13 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
 pub fn gpio_port_bus_new(port: Port) -> GpioPortBus<Disabled> {
     let addr = get_port_address(port.get_name());
     let gpio_port = unsafe { &mut *(addr as *mut GpioPort) };
-    let in_use_mask = 0x3 << port.get_name() as u8 * 2;
-
-    // Always have port marked as "in use".
-    let previous_value = unsafe { GPIO_PORT_IN_USE_LOCK.fetch_or(in_use_mask, Ordering::Relaxed) };
-
-    debug_assert_eq!(previous_value & in_use_mask, 0);
 
     //
+    // No need to mark GPIOPort as "in use" as the corresponding drop logic to ensure this gets
+    // undone + the typestate changes would create very unsafe code.
+    //
+
     // Configure pins to GPIO mode.
-    //
-
     let sel0 = gpio_port.select_0.get_halfword();
     let sel1 = gpio_port.select_1.get_halfword();
 
