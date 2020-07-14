@@ -541,7 +541,7 @@ impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
 /// A GPIO Pin in the `Disabled` configuration.
 pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
     let pin_offset = pin.get_pin_offset_in_port() as u8;
-    let addr = get_port_address(&pin);
+    let addr = get_port_address(pin.get_port());
     let port = unsafe { &mut *(addr as *mut GpioPort) };
 
     set_pin_function_to_gpio(port, pin_offset);

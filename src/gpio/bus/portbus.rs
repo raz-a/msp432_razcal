@@ -7,10 +7,11 @@
 
 use super::{GpioBusInput, GpioBusOutput};
 use crate::gpio::{
-    Disabled, GpioInConfig, GpioOutConfig, GpioPort, GpioPortInUseToken, GpioPortSync,
-    HighImpedance, OpenCollector, PullDown, PullUp, PushPull,
+    get_port_address, Disabled, GpioInConfig, GpioOutConfig, GpioPort, GpioPortInUseToken,
+    GpioPortSync, HighImpedance, OpenCollector, PullDown, PullUp, PushPull, GPIO_PORT_IN_USE_LOCK,
 };
 use crate::pin::Port;
+use core::mem::forget;
 use core::sync::atomic::{compiler_fence, Ordering};
 
 //
@@ -33,7 +34,7 @@ pub struct GpioPortBus<GpioConfig> {
     //
     // Points to the corresponding port registers.
     //
-    port_regs: GpioPort,
+    port_regs: &'static mut GpioPort,
 
     //
     // The port in use.
@@ -47,24 +48,28 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in high-impedance input mode.
-    pub fn to_input_highz(mut self) -> GpioPortBus<GpioInConfig<HighImpedance>> {
+    pub fn to_input_highz(self) -> GpioPortBus<GpioInConfig<HighImpedance>> {
         self.port_regs.resistor_enable.set_halfword(0);
         self.port_regs.direction.set_halfword(0);
-        GpioPortBus {
+        let bus = GpioPortBus {
             _config: GpioInConfig {
                 _input_mode: HighImpedance,
             },
 
             port_regs: self.port_regs,
             port: self.port,
-        }
+        };
+
+        //forget(self);
+
+        bus
     }
 
     /// Convert this port into an input bus with pull-up resistors.
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in input mode with pull-up resistors.
-    pub fn to_input_pullup(mut self) -> GpioPortBus<GpioInConfig<PullUp>> {
+    pub fn to_input_pullup(self) -> GpioPortBus<GpioInConfig<PullUp>> {
         self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
         self.port_regs.direction.set_halfword(0);
         self.port_regs.output.set_halfword(ALL_PINS_MASK);
@@ -82,7 +87,7 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in input mode with pull-down resistors.
-    pub fn to_input_pulldown(mut self) -> GpioPortBus<GpioInConfig<PullDown>> {
+    pub fn to_input_pulldown(self) -> GpioPortBus<GpioInConfig<PullDown>> {
         self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
         self.port_regs.direction.set_halfword(0);
         self.port_regs.output.set_halfword(0);
@@ -100,7 +105,7 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in output mode with push-pull configuration.
-    pub fn to_output_pushpull(mut self) -> GpioPortBus<GpioOutConfig<PushPull>> {
+    pub fn to_output_pushpull(self) -> GpioPortBus<GpioOutConfig<PushPull>> {
         self.port_regs.output.set_halfword(0);
         self.port_regs.direction.set_halfword(ALL_PINS_MASK);
         GpioPortBus {
@@ -117,7 +122,7 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in output mode with open collector configuration.
-    pub fn to_output_opencollector(mut self) -> GpioPortBus<GpioOutConfig<OpenCollector>> {
+    pub fn to_output_opencollector(self) -> GpioPortBus<GpioOutConfig<OpenCollector>> {
         self.port_regs.output.set_halfword(0);
         self.port_regs.direction.set_halfword(ALL_PINS_MASK);
         self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
@@ -320,6 +325,11 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
 
         let set_bits = cleared_bits | value as u16;
         self.port_regs.direction.set_halfword(set_bits);
+
+        debug_assert_eq!(
+            self.port_regs.direction.get_halfword(),
+            !self.port_regs.output.get_halfword()
+        );
     }
 
     /// Sets bits on the GPIO Bus.
@@ -339,6 +349,11 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
 
         let out_value = self.port_regs.output.get_halfword() | set_mask as u16;
         self.port_regs.output.set_halfword(out_value);
+
+        debug_assert_eq!(
+            self.port_regs.direction.get_halfword(),
+            !self.port_regs.output.get_halfword()
+        );
     }
 
     /// Clears bits on the GPIO Bus.
@@ -358,6 +373,11 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
 
         let dir_value = self.port_regs.direction.get_halfword() | clear_mask as u16;
         self.port_regs.direction.set_halfword(dir_value);
+
+        debug_assert_eq!(
+            self.port_regs.direction.get_halfword(),
+            !self.port_regs.output.get_halfword()
+        );
     }
 
     /// Toggles bits on the GPIO Bus.
@@ -374,10 +394,50 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
     }
 }
 
+// impl<GpioConfig> Drop for GpioPortBus<GpioConfig> {
+//     fn drop(&mut self) {
+//         let in_use_mask = 0x3 << self.port.get_name() as u8 * 2;
+//         let previous_value =
+//             unsafe { GPIO_PORT_IN_USE_LOCK.fetch_and(!in_use_mask, Ordering::Relaxed) };
+
+//         debug_assert_ne!(previous_value & in_use_mask, 0);
+//     }
+// }
+
 //
 // Public functions.
 //
 
 pub fn gpio_port_bus_new(port: Port) -> GpioPortBus<Disabled> {
-    todo!();
+    let addr = get_port_address(port.get_name());
+    let gpio_port = unsafe { &mut *(addr as *mut GpioPort) };
+    let in_use_mask = 0x3 << port.get_name() as u8 * 2;
+
+    // Always have port marked as "in use".
+    let previous_value = unsafe { GPIO_PORT_IN_USE_LOCK.fetch_or(in_use_mask, Ordering::Relaxed) };
+
+    debug_assert_eq!(previous_value & in_use_mask, 0);
+
+    //
+    // Configure pins to GPIO mode.
+    //
+
+    let sel0 = gpio_port.select_0.get_halfword();
+    let sel1 = gpio_port.select_1.get_halfword();
+
+    // Use the Select Complement reigster for bits with both Select 0 and 1 set.
+    let selc = sel0 & sel1;
+    gpio_port.complement_selection.set_halfword(selc);
+
+    compiler_fence(Ordering::SeqCst);
+
+    // Clear the appropriate remaing Select bits.
+    gpio_port.select_0.set_halfword(0);
+    gpio_port.select_1.set_halfword(0);
+
+    GpioPortBus {
+        _config: Disabled,
+        port: port,
+        port_regs: gpio_port,
+    }
 }

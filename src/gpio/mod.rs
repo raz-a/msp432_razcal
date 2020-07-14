@@ -169,18 +169,16 @@ struct GpioPort {
 // Module private functions.
 //
 
-/// Gets the port address for the pin provided.
+/// Gets the GPIO port address for the pin provided.
 ///
 /// # Arguments
 /// `pin` - Provides a reference to the pin.
 ///
 /// # Returns
 /// The address of the port that the provided pin belongs to.
-fn get_port_address(pin: &Pin) -> u32 {
-    let port_number = pin.get_port() as u32;
-    if port_number == PortName::PortJ as u32 {
-        PORT_MODULE + PORT_J_OFFSET
-    } else {
-        PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port_number
+fn get_port_address(port: PortName) -> u32 {
+    match port {
+        PortName::PortJ => PORT_MODULE + PORT_J_OFFSET,
+        _ => PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port as u32,
     }
 }
