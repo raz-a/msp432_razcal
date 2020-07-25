@@ -262,9 +262,9 @@ impl PinName {
 }
 
 #[cfg(not(any(
-    msp432_package = "vqfn",
-    msp432_package = "nfbga",
-    msp432_package = "lqfp"
+    razcal_msp432_package = "vqfn",
+    razcal_msp432_package = "nfbga",
+    razcal_msp432_package = "lqfp"
 )))]
 compile_error!("Msp432 package must be defined.");
 
@@ -273,7 +273,7 @@ compile_error!("Msp432 package must be defined.");
 //
 
 /// Represents the pins available for the given controller.
-#[cfg(msp432_package = "vqfn")]
+#[cfg(razcal_msp432_package = "vqfn")]
 static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0x0FFF),
     AtomicU16::new(0xFCFF),
@@ -284,7 +284,7 @@ static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
 ];
 
 /// Represents the pins available for the given controller.
-#[cfg(msp432_package = "nfbga")]
+#[cfg(razcal_msp432_package = "nfbga")]
 static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0xFFFF),
     AtomicU16::new(0xFFFF),
@@ -295,7 +295,7 @@ static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
 ];
 
 /// Represents the pins available for the given controller.
-#[cfg(msp432_package = "lqfp")]
+#[cfg(razcal_msp432_package = "lqfp")]
 static mut PORT_PINS_AVAILABLE: [AtomicU16; 6] = [
     AtomicU16::new(0xFFFF),
     AtomicU16::new(0xFFFF),

@@ -12,7 +12,15 @@ struct RazCalConfig {
     mcu: String,
 }
 
-/// MSP432 Specific configurations.
+//
+// Generic configurations.
+//
+
+//
+// MSP432 Specific configurations.
+//
+
+
 
 /// Supported MSP432 Package Types
 const MSP432_PACKAGE_VQFN: &str = "vqfn";
@@ -38,13 +46,17 @@ fn main() {
 
     match msp432_supported_types.get(&config.mcu.to_lowercase()) {
         Some(found_mcu) => {
-            println!("cargo:rustc-cfg=msp432_package=\"{}\"", found_mcu.package);
+            println!("cargo:rustc-cfg=razcal_msp432_package=\"{}\"", found_mcu.package);
         }
 
         None => {
             panic!("MSP432 Variant not supported.");
         }
     }
+
+    // MSP432 Support 8-bit and 16-bit GPIO ports.
+    println!("cargo:rustc-cfg=razcal_gpio_port_size=\"{}\"", 8);
+    println!("cargo:rustc-cfg=razcal_gpio_port_size=\"{}\"", 16);
 }
 
 fn get_supported_mcus() -> HashMap<String, Msp432Config> {
