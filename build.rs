@@ -12,16 +12,6 @@ struct RazCalConfig {
     mcu: String,
 }
 
-//
-// Generic configurations.
-//
-
-//
-// MSP432 Specific configurations.
-//
-
-
-
 /// Supported MSP432 Package Types
 const MSP432_PACKAGE_VQFN: &str = "vqfn";
 const MSP432_PACKAGE_NFBGA: &str = "nfbga";
