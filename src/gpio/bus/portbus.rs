@@ -400,7 +400,10 @@ pub fn gpio_port_bus_new(port: Port) -> GpioPortBus<Disabled> {
     //
     // No need to mark GPIOPort as "in use" as the corresponding drop logic to ensure this gets
     // undone + the typestate changes would create very unsafe code.
+    // This relies on the fact that no other pins on this port could ever be in use during this
+    // bus's lifetime as it owns the port structure.
     //
+
 
     // Configure pins to GPIO mode.
     let sel0 = gpio_port.select_0.get_halfword();
