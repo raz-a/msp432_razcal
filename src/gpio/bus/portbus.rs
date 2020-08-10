@@ -404,7 +404,6 @@ pub fn gpio_port_bus_new(port: Port) -> GpioPortBus<Disabled> {
     // bus's lifetime as it owns the port structure.
     //
 
-
     // Configure pins to GPIO mode.
     let sel0 = gpio_port.select_0.get_halfword();
     let sel1 = gpio_port.select_1.get_halfword();

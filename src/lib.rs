@@ -25,12 +25,12 @@ fn assume_init_const_generic_array<T, const SIZE: usize>(
 }
 
 pub mod registers {
-    pub enum Halves {
+    pub enum Half {
         Lower = 0,
         Upper = 1,
     }
 
-    pub enum Quarters {
+    pub enum Quarter {
         FirstQuartile = 0,
         SecondQuartile = 1,
         ThirdQuartile = 2,
@@ -45,22 +45,22 @@ pub mod registers {
     }
 
     impl Reg16 {
-        pub fn get_byte(&self, half: Halves) -> u8 {
+        pub fn get_byte(&self, half: Half) -> u8 {
             let index = half as usize;
             unsafe { self.bytes[index] }
         }
 
-        pub fn set_byte(&mut self, half: Halves, value: u8) {
+        pub fn set_byte(&mut self, half: Half, value: u8) {
             let index = half as usize;
             unsafe { self.bytes[index] = value };
         }
 
-        pub fn get_byte_ptr(&self, half: Halves) -> *const u8 {
+        pub fn get_byte_ptr(&self, half: Half) -> *const u8 {
             let index = half as usize;
             unsafe { &self.bytes[index] as *const u8 }
         }
 
-        pub fn get_byte_ptr_mut(&mut self, half: Halves) -> *mut u8 {
+        pub fn get_byte_ptr_mut(&mut self, half: Half) -> *mut u8 {
             let index = half as usize;
             unsafe { &mut self.bytes[index] as *mut u8 }
         }
