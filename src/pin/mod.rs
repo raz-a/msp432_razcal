@@ -3,6 +3,13 @@
 //! structures.
 
 //
+// Assure configuration variables are set.
+//
+
+#[cfg(not(all(razcal_gpio_port_size = "8", razcal_gpio_port_size = "16")))]
+compile_error!("razcal_gpio_port_size should be defined as both 8 and 16 for MSP432");
+
+//
 // Internal Modules
 //
 
