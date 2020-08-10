@@ -24,18 +24,20 @@ fn assume_init_const_generic_array<T, const SIZE: usize>(
     unsafe { init_array.read() }
 }
 
-pub mod registers {
-    pub enum Half {
-        Lower = 0,
-        Upper = 1,
-    }
+pub enum Half {
+    Lower = 0,
+    Upper = 1,
+}
 
-    pub enum Quarter {
-        FirstQuartile = 0,
-        SecondQuartile = 1,
-        ThirdQuartile = 2,
-        FourthQuartile = 3,
-    }
+pub enum Quarter {
+    FirstQuartile = 0,
+    SecondQuartile = 1,
+    ThirdQuartile = 2,
+    FourthQuartile = 3,
+}
+
+pub mod registers {
+    use super::*;
 
     pub type Reg8 = u8;
 
