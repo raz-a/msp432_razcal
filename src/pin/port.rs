@@ -5,7 +5,7 @@
 // Dependencies
 //
 
-use super::{PortName, PORT_PINS_AVAILABLE};
+use super::{PortName, PortName16, PORT_PINS_AVAILABLE};
 use core::sync::atomic::Ordering;
 
 //
@@ -25,7 +25,7 @@ const ALL_PINS_IN_PORT: u16 = (((1 as usize) << NUM_PINS_IN_PORT) - 1) as u16;
 /// Represents a port on the MCU.
 pub struct Port {
     /// The unique identifier for the port/
-    port_name: PortName,
+    port_name: PortName16,
 }
 
 impl Port {
@@ -37,7 +37,7 @@ impl Port {
     /// # Returns
     /// Some(Port) - If all pins in the port are available.\
     /// None - If any pins within the port are already in use.
-    pub fn new(port: PortName) -> Option<Self> {
+    pub fn new(port: PortName16) -> Option<Self> {
         let port_index = port as usize;
         let value = unsafe {
             PORT_PINS_AVAILABLE
@@ -65,7 +65,7 @@ impl Port {
     /// # Returns
     /// PortName
     pub fn get_name(&self) -> PortName {
-        self.port_name
+        PortName::Port16(self.port_name)
     }
 
     /// Gets the number of pins in this port.

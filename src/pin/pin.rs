@@ -5,7 +5,7 @@
 // Dependencies
 //
 
-use super::{PinName, PinOffset, PortName, PORT_PINS_AVAILABLE};
+use super::{PinName, PinName16, PinOffset, PortName, PortName16, PORT_PINS_AVAILABLE};
 use core::sync::atomic::Ordering;
 
 //
@@ -14,8 +14,8 @@ use core::sync::atomic::Ordering;
 
 /// Represents a pin to the MCU.
 pub struct Pin {
-    /// The unique identifier for the pin.
-    pin: PinName,
+    /// The unique identifier for the pin. 16 bit port identifier is always used.
+    pin: PinName16,
 }
 
 impl Pin {
@@ -28,8 +28,9 @@ impl Pin {
     /// Some(Pin) - If the pin is available.\
     /// None - If a pin with the same PinName already exists.
     pub fn new(pin: PinName) -> Option<Self> {
+        let pin = pin.to_16_bit();
         let port = pin.port_name as usize;
-        let pin_mask = 1 << (pin.pin_offset as usize);
+        let pin_mask = 1 << pin.pin_offset as usize;
         let value = unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port)
@@ -48,14 +49,29 @@ impl Pin {
     /// # Returns
     /// PinName
     pub fn get_pin(&self) -> PinName {
-        self.pin
+        PinName {
+            port_name: PortName::Port16(self.pin.port_name),
+            pin_offset: self.pin.pin_offset,
+        }
     }
+
+    //
+    // TODO: Implement all 8-bit and 16-bit versions.
+    //
 
     /// Gets the port that this pin belongs to.
     ///
     /// # Returns
     /// PortName
     pub fn get_port(&self) -> PortName {
+        PortName::Port16(self.pin.port_name)
+    }
+
+    /// Gets the 16-bit port that this pin belongs to.
+    ///
+    /// # Returns
+    /// PortName
+    pub fn get_port16(&self) -> PortName16 {
         self.pin.port_name
     }
 

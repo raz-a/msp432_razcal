@@ -553,7 +553,7 @@ pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
         pin_offset,
     );
 
-    let in_use_shift = pin.get_port() as u8 * 2;
+    let in_use_shift = pin.get_port16() as u8 * 2;
     let in_use_mask = if pin_offset > 7 { 0x2 } else { 0x1 };
 
     let in_use = in_use_mask << in_use_shift;

@@ -178,7 +178,14 @@ struct GpioPort {
 /// The address of the port that the provided pin belongs to.
 fn get_port_address(port: PortName) -> u32 {
     match port {
-        PortName::PortJ => PORT_MODULE + PORT_J_OFFSET,
-        _ => PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port as u32,
+        PortName::Port8(port_name) => match port_name {
+            PortName8::PortJ => PORT_MODULE + PORT_J_OFFSET,
+            _ => PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port_name as u32 / 2,
+        },
+
+        PortName::Port16(port_name) => match port_name {
+            PortName16::PortJ => PORT_MODULE + PORT_J_OFFSET,
+            _ => (core::mem::size_of::<GpioPort>() as u32) * port_name as u32,
+        },
     }
 }
