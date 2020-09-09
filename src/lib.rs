@@ -93,6 +93,51 @@ pub mod registers {
     //TODO: Implement 32 bit version
 }
 
+//TODO: Move to separate project or "util" component
+/// Consists of general utility functions and structures.
+pub mod util {
+    use core::num::NonZeroU32;
+
+    /// Retries a provided operation if the operation result is a certain value.
+    ///
+    /// # Arguments
+    /// `operation` - The operation to be executed.
+    /// `retry_result` - The result value that will prompt a retry.
+    /// `num_tries` - Optionally provides the maximum number of tries to attempt.
+    ///
+    /// # Returns
+    /// The result of the last execution of the operation, or an error if the maximum number of tries
+    /// was reached.
+    pub fn retry_if<O, R>(
+        mut operation: O,
+        retry_result: R,
+        num_tries: Option<NonZeroU32>,
+    ) -> Result<R, ()>
+    where
+        O: FnMut() -> R,
+        R: PartialEq,
+    {
+        match num_tries {
+            Some(attempts) => {
+                for _i in 0..attempts.get() {
+                    let result = operation();
+                    if result != retry_result {
+                        return Ok(result);
+                    }
+                }
+
+                Err(())
+            }
+            None => loop {
+                let result = operation();
+                if result != retry_result {
+                    return Ok(result);
+                }
+            },
+        }
+    }
+}
+
 pub mod gpio;
 pub mod pin;
 pub mod watchdog;
