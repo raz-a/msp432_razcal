@@ -1,4 +1,4 @@
-#![cfg_attr(not(test), no_std)]
+#![no_std]
 #![feature(const_generics)]
 #![feature(maybe_uninit_uninit_array)]
 #![feature(maybe_uninit_ref)]

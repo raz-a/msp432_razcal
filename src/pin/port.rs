@@ -60,7 +60,7 @@ impl Port {
         None
     }
 
-    /// Gets the uniquie identifier for this port.
+    /// Gets the unique identifier for this port.
     ///
     /// # Returns
     /// PortName
