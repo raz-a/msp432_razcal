@@ -8,7 +8,7 @@
 use super::{GpioBusInput, GpioBusOutput};
 use crate::gpio::{
     get_port_address, Disabled, GpioInConfig, GpioOutConfig, GpioPort, GpioPortInUseToken,
-    GpioPortSync, HighImpedance, OpenCollector, PullDown, PullUp, PushPull, GPIO_PORT_IN_USE_LOCK,
+    GpioPortSync, HighImpedance, OpenCollector, PullDown, PullUp, PushPull,
 };
 use crate::pin::Port;
 use core::sync::atomic::{compiler_fence, Ordering};

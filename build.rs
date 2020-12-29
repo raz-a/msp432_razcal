@@ -2,11 +2,7 @@ extern crate serde;
 extern crate toml;
 
 use std::collections::HashMap;
-use std::env;
 use std::fs;
-
-use env::var;
-
 /// Defines the fields of the RazCAL configuration toml.
 #[derive(serde::Deserialize)]
 struct RazCalConfig {
@@ -25,17 +21,15 @@ struct Msp432Config {
 }
 
 fn main() {
-    // TODO: Remove
-    println!("RAZCAL build.rs");
-
     // Supported MSP432 Variants:
     let msp432_supported_types = get_supported_mcus();
 
     // Find RAZCAL_CONFIG toml file
-    let config_location = env!(
-        "RAZCAL_CONFIG",
-        "RAZCAL_CONFIG environment variable not found"
-    );
+    let config_location = match option_env!("RAZCAL_CONFIG") {
+        Some(location) => location,
+        None => ".\\default_razcal_config.toml",
+    };
+
     let config_string = fs::read_to_string(config_location).unwrap();
     let config: RazCalConfig = toml::from_str(&config_string).unwrap();
 

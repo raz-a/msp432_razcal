@@ -5,6 +5,8 @@ const WDTCTL_ADDRESS: usize = 0x4000_480C;
 const WDTPW_SHIFT: u8 = 8;
 const WDTPW_MASK: u16 = 0xFF << WDTPW_SHIFT;
 const WDTPW_WRITE: u16 = 0x5A << WDTPW_SHIFT;
+
+#[allow(dead_code)]
 const WDTPW_READ: u16 = 0x69 << WDTPW_SHIFT;
 
 const WDTHOLD_SHIFT: u8 = 7;
