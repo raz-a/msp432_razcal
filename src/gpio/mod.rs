@@ -2,6 +2,9 @@
 //! The `gpio` module includes structures and functions to utilize General Purpose Input and Output
 //! (GPIO) pins.
 
+// TODO: Make sure GPIO isn't tied too much to Pin interface.
+// TODO: Bus/pin interaction.
+
 //
 // Internal Modules
 //
@@ -177,15 +180,11 @@ struct GpioPort {
 /// # Returns
 /// The address of the port that the provided pin belongs to.
 fn get_port_address(port: PortName) -> u32 {
-    match port {
-        PortName::Port8(port_name) => match port_name {
-            PortName8::PortJ => PORT_MODULE + PORT_J_OFFSET,
-            _ => PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port_name as u32 / 2,
-        },
-
-        PortName::Port16(port_name) => match port_name {
-            PortName16::PortJ => PORT_MODULE + PORT_J_OFFSET,
-            _ => (core::mem::size_of::<GpioPort>() as u32) * port_name as u32,
-        },
+    let port_j_index = PortName::PORTJ.get_16_bit_port_index();
+    let port_index = port.get_16_bit_port_index();
+    if port_index == port_j_index {
+        return PORT_MODULE + PORT_J_OFFSET;
     }
+
+    PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port_index as u32
 }

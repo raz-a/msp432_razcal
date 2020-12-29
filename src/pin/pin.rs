@@ -5,7 +5,7 @@
 // Dependencies
 //
 
-use super::{PinName, PinName16, PinOffset, PortName, PortName16, PORT_PINS_AVAILABLE};
+use super::{PinName, PortName, PORT_PINS_AVAILABLE};
 use core::sync::atomic::Ordering;
 
 //
@@ -15,7 +15,7 @@ use core::sync::atomic::Ordering;
 /// Represents a pin to the MCU.
 pub struct Pin {
     /// The unique identifier for the pin. 16 bit port identifier is always used.
-    pin: PinName16,
+    pin: PinName,
 }
 
 impl Pin {
@@ -29,8 +29,8 @@ impl Pin {
     /// None - If a pin with the same PinName already exists.
     pub fn new(pin: PinName) -> Option<Self> {
         let pin = pin.to_16_bit();
-        let port = pin.port_name as usize;
-        let pin_mask = 1 << pin.pin_offset as usize;
+        let port = pin.port_name.number;
+        let pin_mask = 1 << pin.pin_offset;
         let value = unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port)
@@ -49,10 +49,7 @@ impl Pin {
     /// # Returns
     /// PinName
     pub fn get_pin(&self) -> PinName {
-        PinName {
-            port_name: PortName::Port16(self.pin.port_name),
-            pin_offset: self.pin.pin_offset,
-        }
+        self.pin
     }
 
     //
@@ -64,14 +61,6 @@ impl Pin {
     /// # Returns
     /// PortName
     pub fn get_port(&self) -> PortName {
-        PortName::Port16(self.pin.port_name)
-    }
-
-    /// Gets the 16-bit port that this pin belongs to.
-    ///
-    /// # Returns
-    /// PortName
-    pub fn get_port16(&self) -> PortName16 {
         self.pin.port_name
     }
 
@@ -79,7 +68,7 @@ impl Pin {
     ///
     /// # Returns
     /// PinOffset
-    pub fn get_pin_offset_in_port(&self) -> PinOffset {
+    pub fn get_pin_offset_in_port(&self) -> usize {
         self.pin.pin_offset
     }
 }
@@ -87,8 +76,8 @@ impl Pin {
 impl Drop for Pin {
     /// Drops the Pin structure and marks the pin as available.
     fn drop(&mut self) {
-        let port = self.pin.port_name as usize;
-        let pin_mask = 1 << (self.pin.pin_offset as usize);
+        let port = self.pin.port_name.number;
+        let pin_mask = 1 << (self.pin.pin_offset);
         unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port)
