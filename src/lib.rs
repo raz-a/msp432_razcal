@@ -1,6 +1,4 @@
 #![no_std]
-#![feature(maybe_uninit_uninit_array)]
-#![feature(maybe_uninit_ref)]
 
 const PERIPHERAL_BASE: u32 = 0x4000_0000;
 const PERIPHERAL_END: u32 = 0x400F_FFFF;

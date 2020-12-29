@@ -27,7 +27,7 @@ fn main() {
     // Find RAZCAL_CONFIG toml file
     let config_location = match option_env!("RAZCAL_CONFIG") {
         Some(location) => location,
-        None => ".\\default_razcal_config.toml",
+        None => "./default_razcal_config.toml",
     };
 
     let config_string = fs::read_to_string(config_location).unwrap();
