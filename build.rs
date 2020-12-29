@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 
+use env::var;
+
 /// Defines the fields of the RazCAL configuration toml.
 #[derive(serde::Deserialize)]
 struct RazCalConfig {
@@ -23,6 +25,9 @@ struct Msp432Config {
 }
 
 fn main() {
+    // TODO: Remove
+    println!("RAZCAL build.rs");
+
     // Supported MSP432 Variants:
     let msp432_supported_types = get_supported_mcus();
 
@@ -36,7 +41,10 @@ fn main() {
 
     match msp432_supported_types.get(&config.mcu.to_lowercase()) {
         Some(found_mcu) => {
-            println!("cargo:rustc-cfg=razcal_msp432_package=\"{}\"", found_mcu.package);
+            println!(
+                "cargo:rustc-cfg=razcal_msp432_package=\"{}\"",
+                found_mcu.package
+            );
         }
 
         None => {
