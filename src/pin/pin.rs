@@ -32,7 +32,7 @@ impl Pin {
     pub fn new(pin: PinName) -> Option<Self> {
         // Get the 16-bit port identifier to make PINS_AVAILABLE calculation easier.
         let port = pin.get_owning_port_16_bit_index();
-        let pin_mask = 1 << pin.get_owning_port_16_bit_index();
+        let pin_mask = 1 << pin.get_16_bit_port_offset();
         let value = unsafe {
             PORT_PINS_AVAILABLE
                 .get_unchecked_mut(port)
