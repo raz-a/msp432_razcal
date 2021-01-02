@@ -5,6 +5,8 @@
 // Dependencies
 //
 
+use crate::Half;
+
 use super::{PortName, PortSize, PORT_PINS_AVAILABLE};
 use core::sync::atomic::Ordering;
 
@@ -27,7 +29,7 @@ const UPPER_PINS_IN_PORT: u16 = ALL_PINS_IN_PORT - LOWER_PINS_IN_PORT;
 
 /// Represents a port on the MCU.
 pub struct Port {
-    /// The unique identifier for the port/
+    /// The unique identifier for the port.
     port_name: PortName,
 }
 
@@ -41,8 +43,8 @@ impl Port {
     /// Some(Port) - If all pins in the port are available.
     /// None - If any pins within the port are already in use.
     pub fn new(port: PortName) -> Option<Self> {
-        let port_index = port.get_16_bit_port_index();
-        let required_pins = match port.size {
+        let port_index = port.get_16_bit_index();
+        let required_pins = match port.get_size() {
             PortSize::Port8Bit => {
                 if port.is_upper_half_port() {
                     UPPER_PINS_IN_PORT
@@ -81,23 +83,48 @@ impl Port {
         self.port_name
     }
 
-    /// Gets the number of pins in this port.
+    /// Gets the port index from a port.
     ///
     /// # Returns
-    /// Number of pins in the port.
-    pub fn get_number_of_pins(&self) -> usize {
-        match self.port_name.size {
-            PortSize::Port8Bit => HALF_PINS_IN_PORT,
-            PortSize::Port16Bit => NUM_PINS_IN_PORT,
-        }
+    /// The port index.
+
+    pub fn get_index(&self) -> usize {
+        self.get_name().get_index()
+    }
+
+    /// Calculates the 16-bit port number from a port.
+    ///
+    /// # Returns
+    /// The 16-bit port number.
+    pub fn get_16_bit_index(&self) -> usize {
+        self.get_name().get_16_bit_index()
+    }
+
+    /// Calculates the 8-bit port number from a port
+    ///
+    /// # Arguments
+    /// `half` - Provides the half to calculate. Ignored if the port is an 8-bit port.
+    ///
+    /// # Returns
+    /// The 8-bit port number.
+    pub fn get_8_bit_index(&self, half: Half) -> usize {
+        self.get_name().get_8_bit_index(half)
+    }
+
+    /// Determines the size of a port.
+    ///
+    /// # Returns
+    /// The port size.
+    pub fn get_size(&self) -> PortSize {
+        self.get_name().get_size()
     }
 }
 
 impl Drop for Port {
     /// Drops the Port structure and marks all the pins as available.
     fn drop(&mut self) {
-        let port_index = self.port_name.get_16_bit_port_index();
-        let required_pins = match self.port_name.size {
+        let port_index = self.get_16_bit_index();
+        let required_pins = match self.get_size() {
             PortSize::Port8Bit => {
                 if self.port_name.is_upper_half_port() {
                     UPPER_PINS_IN_PORT

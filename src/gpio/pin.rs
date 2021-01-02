@@ -13,9 +13,9 @@
 // Dependencies
 //
 
-use crate::gpio::*;
 use crate::peripheral_to_alias;
 use crate::pin::Pin;
+use crate::{gpio::*, Half};
 use core::sync::atomic::{compiler_fence, Ordering};
 
 //
@@ -540,11 +540,12 @@ impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
 /// # Returns
 /// A GPIO Pin in the `Disabled` configuration.
 pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
-    let pin_offset = pin.get_pin_offset_in_port() as u8;
-    let addr = get_port_address(pin.get_port());
+    let addr = get_port_address(pin.get_owning_port_name());
     let port = unsafe { &mut *(addr as *mut GpioPort) };
+    let pin_offset = pin.get_16_bit_port_offset() as u8;
 
     set_pin_function_to_gpio(port, pin_offset);
+
     let input_addr = peripheral_to_alias(port.input.get_halfword_ptr() as u32, pin_offset);
     let output_addr = peripheral_to_alias(port.output.get_halfword_ptr_mut() as u32, pin_offset);
     let dir_addr = peripheral_to_alias(port.direction.get_halfword_ptr_mut() as u32, pin_offset);
@@ -553,8 +554,12 @@ pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
         pin_offset,
     );
 
-    let in_use_shift = pin.get_port().get_16_bit_port_index() as u8 * 2;
-    let in_use_mask = if pin_offset > 7 { 0x2 } else { 0x1 };
+    let in_use_shift = pin.get_owning_port_8_bit_index(Half::Lower) as u8;
+    let in_use_mask = if pin_offset < PortSize::Port8Bit.to_num_of_bits() as u8 {
+        PORT_IN_USE_LOWER_HALF
+    } else {
+        PORT_IN_USE_UPPER_HALF
+    };
 
     let in_use = in_use_mask << in_use_shift;
     let gpio_pin = unsafe {

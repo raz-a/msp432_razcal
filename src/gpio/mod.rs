@@ -108,11 +108,20 @@ const PORT_MODULE: u32 = PERIPHERAL_BASE + 0x4C00;
 /// Offset from the Base Port module address to PortJ.
 const PORT_J_OFFSET: u32 = 0x120;
 
+/// Port in use flag for a lower half port.
+const PORT_IN_USE_LOWER_HALF: u16 = 0x1;
+
+/// Port in use flag for a upper half port.
+const PORT_IN_USE_UPPER_HALF: u16 = 0x2;
+
+/// Port in use flag for a full port.
+// const PORT_IN_USE_FULL: u16 = PORT_IN_USE_LOWER_HALF | PORT_IN_USE_UPPER_HALF;
+
 //
 // Globals
 //
 
-/// Represents which ports may have non atomic operations currentoly acting on them.
+/// Represents which ports may have non atomic operations currently acting on them.
 /// It is organized as follows:
 /// 0b000000  X     X      X     X     X     X     X     X     X     X     X
 ///         PortJ Port10 Port9 Port8 Port7 Port6 Port5 Port4 Port3 Port2 Port1
@@ -180,8 +189,8 @@ struct GpioPort {
 /// # Returns
 /// The address of the port that the provided pin belongs to.
 fn get_port_address(port: PortName) -> u32 {
-    let port_j_index = PortName::PORTJ.get_16_bit_port_index();
-    let port_index = port.get_16_bit_port_index();
+    let port_j_index = PortName::PORTJ.get_16_bit_index();
+    let port_index = port.get_16_bit_index();
     if port_index == port_j_index {
         return PORT_MODULE + PORT_J_OFFSET;
     }

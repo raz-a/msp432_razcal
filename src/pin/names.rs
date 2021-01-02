@@ -14,6 +14,18 @@ pub enum PortSize {
     Port16Bit,
 }
 
+impl PortSize {
+    /// Gets the number of bits represented by a port size.
+    ///
+    /// #Returns the number of bits represented by a `PortSize`.
+    pub fn to_num_of_bits(&self) -> usize {
+        match self {
+            Self::Port8Bit => 8,
+            Self::Port16Bit => 16,
+        }
+    }
+}
+
 pub enum PortNameConversionResult {
     SinglePort(PortName),
     TwoPorts([PortName; 2]),
@@ -23,8 +35,8 @@ pub enum PortNameConversionResult {
 /// Represents unique values for each port grouping.
 #[derive(Copy, Clone)]
 pub struct PortName {
-    pub(super) number: usize,
-    pub(super) size: PortSize,
+    number: usize,
+    size: PortSize,
 }
 
 impl PortName {
@@ -143,11 +155,20 @@ impl PortName {
     // Info functions.
     //
 
+    /// Gets the port index from a port name.
+    ///
+    /// # Returns
+    /// The port index.
+
+    pub fn get_index(&self) -> usize {
+        self.number
+    }
+
     /// Calculates the 16-bit port number from a port name.
     ///
     /// # Returns
-    /// The 16-bit port number
-    pub fn get_16_bit_port_index(&self) -> usize {
+    /// The 16-bit port number.
+    pub fn get_16_bit_index(&self) -> usize {
         match self.size {
             PortSize::Port8Bit => self.number / 2,
             PortSize::Port16Bit => self.number,
@@ -160,8 +181,8 @@ impl PortName {
     /// `half` - Provides the half to calculate. Ignored if the port name represents an 8-bit port.
     ///
     /// # Returns
-    /// The 8-bit port number
-    pub fn get_8_bit_port_index(&self, half: Half) -> usize {
+    /// The 8-bit port number.
+    pub fn get_8_bit_index(&self, half: Half) -> usize {
         match self.size {
             PortSize::Port16Bit => match half {
                 Half::Lower => self.number * 2,
@@ -175,7 +196,7 @@ impl PortName {
     ///
     /// # Returns
     /// The port size of the port name.
-    pub fn get_port_size(&self) -> PortSize {
+    pub fn get_size(&self) -> PortSize {
         self.size
     }
 
@@ -192,12 +213,12 @@ impl PortName {
             PortSize::Port8Bit => PortNameConversionResult::SinglePort(self),
             PortSize::Port16Bit => {
                 let lower_port = PortName {
-                    number: self.get_8_bit_port_index(Half::Lower),
+                    number: self.get_8_bit_index(Half::Lower),
                     size: PortSize::Port16Bit,
                 };
 
                 let upper_port = PortName {
-                    number: self.get_8_bit_port_index(Half::Lower),
+                    number: self.get_8_bit_index(Half::Lower),
                     size: PortSize::Port16Bit,
                 };
 
@@ -221,7 +242,7 @@ impl PortName {
                 };
 
                 let port_name = PortName {
-                    number: self.get_16_bit_port_index(),
+                    number: self.get_16_bit_index(),
                     size: PortSize::Port8Bit,
                 };
 
@@ -236,8 +257,8 @@ impl PortName {
 /// Represents unique values for each pin.
 #[derive(Copy, Clone)]
 pub struct PinName {
-    pub(super) port_name: PortName,
-    pub(super) pin_offset: usize,
+    port_name: PortName,
+    pin_offset: usize,
 }
 
 impl PinName {
@@ -955,10 +976,6 @@ impl PinName {
     };
 
     //
-    // Private functions.
-    //
-
-    //
     // Conversion functions.
     //
 
@@ -971,14 +988,11 @@ impl PinName {
             PortSize::Port8Bit => self,
             PortSize::Port16Bit => {
                 let (offset, port_number) = if self.pin_offset < 8 {
-                    (
-                        self.pin_offset,
-                        self.port_name.get_8_bit_port_index(Half::Lower),
-                    )
+                    (self.pin_offset, self.port_name.get_8_bit_index(Half::Lower))
                 } else {
                     (
                         self.pin_offset - 8,
-                        self.port_name.get_8_bit_port_index(Half::Upper),
+                        self.port_name.get_8_bit_index(Half::Upper),
                     )
                 };
 
@@ -1009,7 +1023,7 @@ impl PinName {
 
                 PinName {
                     port_name: PortName {
-                        number: self.port_name.get_16_bit_port_index(),
+                        number: self.port_name.get_16_bit_index(),
                         size: PortSize::Port16Bit,
                     },
                     pin_offset: offset,
@@ -1018,17 +1032,96 @@ impl PinName {
         }
     }
 
+    //
+    // Info functions.
+    //
+
     /// Gets the owning port name.
-    ///
-    /// # Arguments
-    /// `port_size` - Provides the size of the owning port to get.
     ///
     /// # Returns
     /// The owning port name.
-    pub fn get_owning_port_name(&self, port_size: PortSize) -> PortName {
-        match port_size {
-            PortSize::Port8Bit => self.to_8_bit().port_name,
-            PortSize::Port16Bit => self.to_16_bit().port_name,
+    pub fn get_owning_port_name(&self) -> PortName {
+        self.port_name
+    }
+
+    /// Gets the port index from the owning port name.
+    ///
+    /// # Returns
+    /// The port index.
+
+    pub fn get_owning_port_index(&self) -> usize {
+        self.get_owning_port_name().get_index()
+    }
+
+    /// Calculates the 16-bit port number from the owning port name.
+    ///
+    /// # Returns
+    /// The 16-bit port number.
+    pub fn get_owning_port_16_bit_index(&self) -> usize {
+        self.get_owning_port_name().get_16_bit_index()
+    }
+
+    /// Calculates the 8-bit port number from the owning port name
+    ///
+    /// # Arguments
+    /// `half` - Provides the half to calculate. Ignored if the port name represents an 8-bit port.
+    ///
+    /// # Returns
+    /// The 8-bit port number.
+    pub fn get_owning_port_8_bit_index(&self, half: Half) -> usize {
+        self.get_owning_port_name().get_8_bit_index(half)
+    }
+
+    /// Determines the size of a port represented by the owning port name.
+    ///
+    /// # Returns
+    /// The port size of the owning port name.
+    pub fn get_owning_port_size(&self) -> PortSize {
+        self.get_owning_port_name().get_size()
+    }
+
+    /// Gets the pin's offset within it's owning port.
+    ///
+    /// # Returns
+    /// The pin offset for the pin name.
+    pub fn get_offset(&self) -> usize {
+        self.pin_offset
+    }
+
+    /// Gets the pin's offset within it's owning 8-bit port.
+    ///
+    /// # Returns
+    /// The pin offset for the pin name.
+    pub fn get_8_bit_port_offset(&self) -> usize {
+        let raw_offset = self.get_offset();
+        let bits_8 = PortSize::Port8Bit.to_num_of_bits();
+        match self.get_owning_port_size() {
+            PortSize::Port8Bit => raw_offset,
+            PortSize::Port16Bit => {
+                if self.get_offset() < bits_8 {
+                    raw_offset
+                } else {
+                    raw_offset - bits_8
+                }
+            }
+        }
+    }
+
+    /// Gets the pin's offset within it's owning 16-bit port.
+    ///
+    /// # Returns
+    /// The pin offset for the pin name.
+    pub fn get_16_bit_port_offset(&self) -> usize {
+        let raw_offset = self.get_offset();
+        match self.get_owning_port_size() {
+            PortSize::Port16Bit => raw_offset,
+            PortSize::Port8Bit => {
+                if self.get_owning_port_name().is_upper_half_port() {
+                    raw_offset + PortSize::Port8Bit.to_num_of_bits()
+                } else {
+                    raw_offset
+                }
+            }
         }
     }
 }
