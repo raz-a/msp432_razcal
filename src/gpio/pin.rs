@@ -2,6 +2,21 @@
 //! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
+// TODO: Sync problems to resolve.
+// 1. Transformation functions. What should happen if there is sync error? GpioPin is consumed...
+//      - Should the error return itself?
+//
+// 2. Write functions. We want a compile time guarantee (for the safe functions) that these functions
+//      can only be called if ITS port lock is held.
+//
+//      - Create "synced" versions of each type. These synced version can be held in a GpioPortInUseToken.
+//                ^ Trait = GpioSyncedComponent
+//      - Remove GpioPortSync.
+//      - Create global functions that take in GpioComponent <new trait> types and will return a set
+//        of GpioSyncedComponents. These components have functions that are allowed to be called only when
+//        synced.
+
+//
 // TODO: Interrupts for Inputs
 //
 
