@@ -15,6 +15,8 @@
 //      - Create global functions that take in GpioComponent <new trait> types and will return a set
 //        of GpioSyncedComponents. These components have functions that are allowed to be called only when
 //        synced.
+//
+//      OR - Just [debug only] runtime check that the correct token is being used?
 
 //
 // TODO: Interrupts for Inputs
