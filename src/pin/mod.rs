@@ -14,6 +14,7 @@ compile_error!("razcal_gpio_port_size should be defined as both 8 and 16 for MSP
 //
 
 mod names;
+mod newpin;
 mod pin;
 mod port;
 
@@ -22,6 +23,7 @@ mod port;
 //
 
 pub use names::*;
+pub use newpin::*;
 pub use pin::*;
 pub use port::*;
 

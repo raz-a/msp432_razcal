@@ -2,6 +2,10 @@
 //! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
+// TODO: Get rid of _port_sync_token and get sync internally.
+//
+
+//
 // TODO: Sync problems to resolve.
 // 1. Transformation functions. What should happen if there is sync error? GpioPin is consumed...
 //      - Should the error return itself?

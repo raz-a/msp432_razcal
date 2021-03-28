@@ -5,6 +5,9 @@ authors = ["Raz <raz-@outlook.com>"]
 edition = "2018"
 build = "build.rs"
 
+[dependencies]
+paste = "1.0"
+
 [build-dependencies]
 serde = { version = "1.0.104", features = ["derive"] }
 toml = "0.5.6"
