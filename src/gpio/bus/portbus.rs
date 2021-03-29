@@ -5,13 +5,18 @@
 // Dependencies
 //
 
-use super::{GpioBusInput, GpioBusOutput};
-use crate::gpio::{
-    get_port_address, Disabled, GpioInConfig, GpioOutConfig, GpioPort, GpioPortInUseToken,
-    GpioPortSync, HighImpedance, OpenCollector, PullDown, PullUp, PushPull,
-};
-use crate::pin::Port;
 use core::sync::atomic::{compiler_fence, Ordering};
+
+use crate::{
+    gpio::{
+        get_port_address, Disabled, GpioIn, GpioInputMode, GpioMode, GpioOut, GpioOutputMode,
+        GpioPort, GpioPortInUseToken, GpioPortSync, HighImpedance, OpenCollector, PullDown, PullUp,
+        PushPull,
+    },
+    pin::IdentifiablePort,
+};
+
+use super::{GpioBusInput, GpioBusOutput};
 
 //
 // Constants
@@ -25,38 +30,32 @@ const ALL_PINS_MASK: u16 = 0xFFFF;
 
 /// Represents a port configured as a GPIO Bus.
 /// `GpioConfig` indicated the specific configuration mode the GPIO bus is in. Can be of type
-/// `Disabled`, `GpioInConfig`, or `GpioOutConfig`.
-pub struct GpioPortBus<GpioConfig> {
+/// `Disabled`, `GpioIn`, or `GpioOut`.
+pub struct GpioPortBus<Mode: GpioMode> {
     /// The specfic GPIO configuration.
-    _config: GpioConfig,
+    _config: Mode,
 
     //
     // Points to the corresponding port registers.
     //
     port_regs: &'static mut GpioPort,
-
-    //
-    // The port in use.
-    //
-    port: Port,
 }
 
 /// The following implements state modification for GPIO Port Bus configurations.
-impl<GpioConfig> GpioPortBus<GpioConfig> {
+impl<Mode: GpioMode> GpioPortBus<Mode> {
     /// Convert this port into a high-impedance input bus.
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in high-impedance input mode.
-    pub fn to_input_highz(self) -> GpioPortBus<GpioInConfig<HighImpedance>> {
+    pub fn to_input_highz(self) -> GpioPortBus<GpioIn<HighImpedance>> {
         self.port_regs.resistor_enable.set_halfword(0);
         self.port_regs.direction.set_halfword(0);
         GpioPortBus {
-            _config: GpioInConfig {
+            _config: GpioIn {
                 _input_mode: HighImpedance,
             },
 
             port_regs: self.port_regs,
-            port: self.port,
         }
     }
 
@@ -64,17 +63,16 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in input mode with pull-up resistors.
-    pub fn to_input_pullup(self) -> GpioPortBus<GpioInConfig<PullUp>> {
+    pub fn to_input_pullup(self) -> GpioPortBus<GpioIn<PullUp>> {
         self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
         self.port_regs.direction.set_halfword(0);
         self.port_regs.output.set_halfword(ALL_PINS_MASK);
         GpioPortBus {
-            _config: GpioInConfig {
+            _config: GpioIn {
                 _input_mode: PullUp,
             },
 
             port_regs: self.port_regs,
-            port: self.port,
         }
     }
 
@@ -82,17 +80,16 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in input mode with pull-down resistors.
-    pub fn to_input_pulldown(self) -> GpioPortBus<GpioInConfig<PullDown>> {
+    pub fn to_input_pulldown(self) -> GpioPortBus<GpioIn<PullDown>> {
         self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
         self.port_regs.direction.set_halfword(0);
         self.port_regs.output.set_halfword(0);
         GpioPortBus {
-            _config: GpioInConfig {
+            _config: GpioIn {
                 _input_mode: PullDown,
             },
 
             port_regs: self.port_regs,
-            port: self.port,
         }
     }
 
@@ -100,16 +97,15 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in output mode with push-pull configuration.
-    pub fn to_output_pushpull(self) -> GpioPortBus<GpioOutConfig<PushPull>> {
+    pub fn to_output_pushpull(self) -> GpioPortBus<GpioOut<PushPull>> {
         self.port_regs.output.set_halfword(0);
         self.port_regs.direction.set_halfword(ALL_PINS_MASK);
         GpioPortBus {
-            _config: GpioOutConfig {
+            _config: GpioOut {
                 _output_mode: PushPull,
             },
 
             port_regs: self.port_regs,
-            port: self.port,
         }
     }
 
@@ -117,22 +113,21 @@ impl<GpioConfig> GpioPortBus<GpioConfig> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in output mode with open collector configuration.
-    pub fn to_output_opencollector(self) -> GpioPortBus<GpioOutConfig<OpenCollector>> {
+    pub fn to_output_opencollector(self) -> GpioPortBus<GpioOut<OpenCollector>> {
         self.port_regs.output.set_halfword(0);
         self.port_regs.direction.set_halfword(ALL_PINS_MASK);
         self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
         GpioPortBus {
-            _config: GpioOutConfig {
+            _config: GpioOut {
                 _output_mode: OpenCollector,
             },
 
             port_regs: self.port_regs,
-            port: self.port,
         }
     }
 }
 
-impl<GpioConfig> GpioPortSync for GpioPortBus<GpioConfig> {
+impl<Mode: GpioMode> GpioPortSync for GpioPortBus<Mode> {
     /// Attempts to obtain a GpioPortInUseToken. Because this bug owns the entire port, this is
     /// effectively a no-op.
     ///
@@ -144,7 +139,7 @@ impl<GpioConfig> GpioPortSync for GpioPortBus<GpioConfig> {
     }
 }
 
-impl<InputMode> GpioBusInput for GpioPortBus<GpioInConfig<InputMode>> {
+impl<InputMode: GpioInputMode> GpioBusInput for GpioPortBus<GpioIn<InputMode>> {
     /// Reads the value of the GPIO Bus.
     ///
     /// # Returns
@@ -154,7 +149,7 @@ impl<InputMode> GpioBusInput for GpioPortBus<GpioInConfig<InputMode>> {
     }
 }
 
-impl<OutputMode> GpioBusInput for GpioPortBus<GpioOutConfig<OutputMode>> {
+impl<OutputMode: GpioOutputMode> GpioBusInput for GpioPortBus<GpioOut<OutputMode>> {
     /// Reads the value of the GPIO Bus.
     ///
     /// # Returns
@@ -164,7 +159,7 @@ impl<OutputMode> GpioBusInput for GpioPortBus<GpioOutConfig<OutputMode>> {
     }
 }
 
-impl GpioBusOutput for GpioPortBus<GpioOutConfig<PushPull>> {
+impl GpioBusOutput for GpioPortBus<GpioOut<PushPull>> {
     /// Sets the value of the GPIO Bus.
     ///
     /// # Arguments
@@ -257,7 +252,7 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<PushPull>> {
     }
 }
 
-impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
+impl GpioBusOutput for GpioPortBus<GpioOut<OpenCollector>> {
     /// Sets the value of the GPIO Bus.
     ///
     /// # Arguments
@@ -393,8 +388,8 @@ impl GpioBusOutput for GpioPortBus<GpioOutConfig<OpenCollector>> {
 // Public functions.
 //
 
-pub fn gpio_port_bus_new(port: Port) -> GpioPortBus<Disabled> {
-    let addr = get_port_address(port.get_name());
+pub fn gpio_port_bus_new<PortId: IdentifiablePort>(port: PortId) -> GpioPortBus<Disabled> {
+    let addr = get_port_address(port.get_port_name());
     let gpio_port = unsafe { &mut *(addr as *mut GpioPort) };
 
     //
@@ -420,7 +415,6 @@ pub fn gpio_port_bus_new(port: Port) -> GpioPortBus<Disabled> {
 
     GpioPortBus {
         _config: Disabled,
-        port: port,
         port_regs: gpio_port,
     }
 }

@@ -2,6 +2,10 @@
 //! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
+// TODO: Seal traits.
+//
+
+//
 // TODO: Get rid of _port_sync_token and get sync internally.
 //
 
@@ -34,9 +38,8 @@
 // Dependencies
 //
 
-use crate::peripheral_to_alias;
-use crate::pin::Pin;
-use crate::{gpio::*, Half};
+use crate::gpio::*;
+use crate::{peripheral_to_alias, pin::IdentifiablePin};
 use core::sync::atomic::{compiler_fence, Ordering};
 
 //
@@ -106,9 +109,9 @@ pub trait GpioPinOutput {
 /// # Type Options
 /// `GpioConfig` indicated the specific configuration mode the GPIO pin is in. Can be of type
 /// `Disabled`, `GpioInConfig`, or `GpioOutConfig`.
-pub struct GpioPin<GpioConfig> {
+pub struct GpioPin<Mode: GpioMode> {
     /// The specfic GPIO configuration.
-    _config: GpioConfig,
+    _config: Mode,
 
     /// Points to the corresponding bit-band alias for the input register.
     input: &'static u16,
@@ -125,13 +128,10 @@ pub struct GpioPin<GpioConfig> {
     /// A bitmask indicating the port that this pin belongs to. Used for synchronizing with other
     /// GPIO components.
     port_in_use_mask: u16,
-
-    /// The name of the pin in use.
-    pin: Pin,
 }
 
 /// The following implements state modification for GPIO Pin configurations.
-impl<GpioConfig> GpioPin<GpioConfig> {
+impl<Mode: GpioMode> GpioPin<Mode> {
     /// Convert this instance into a high-impedance input pin.
     ///
     /// # Arguments
@@ -143,7 +143,7 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     pub fn to_input_highz(
         self,
         _port_sync_token: &mut GpioPortInUseToken,
-    ) -> GpioPin<GpioInConfig<HighImpedance>> {
+    ) -> GpioPin<GpioIn<HighImpedance>> {
         //
         // UNSAFE: _port_sync_token ensures that no other thread can access the 8-bit GPIO port that
         // this pin belongs to.
@@ -163,7 +163,7 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     pub fn to_input_pullup(
         self,
         _port_sync_token: &mut GpioPortInUseToken,
-    ) -> GpioPin<GpioInConfig<PullUp>> {
+    ) -> GpioPin<GpioIn<PullUp>> {
         //
         // UNSAFE: _port_sync_token ensures that no other thread can access the 8-bit GPIO port that
         // this pin belongs to.
@@ -183,7 +183,7 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     pub fn to_input_pulldown(
         self,
         _port_sync_token: &mut GpioPortInUseToken,
-    ) -> GpioPin<GpioInConfig<PullDown>> {
+    ) -> GpioPin<GpioIn<PullDown>> {
         //
         // UNSAFE: _port_sync_token ensures that no other thread can access the 8-bit GPIO port that
         // this pin belongs to.
@@ -203,7 +203,7 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     pub fn to_output_pushpull(
         self,
         _port_sync_token: &mut GpioPortInUseToken,
-    ) -> GpioPin<GpioOutConfig<PushPull>> {
+    ) -> GpioPin<GpioOut<PushPull>> {
         //
         // UNSAFE: _port_sync_token ensures that no other thread can access the 8-bit GPIO port that
         // this pin belongs to.
@@ -223,7 +223,7 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     pub fn to_output_opencollector(
         self,
         _port_sync_token: &mut GpioPortInUseToken,
-    ) -> GpioPin<GpioOutConfig<OpenCollector>> {
+    ) -> GpioPin<GpioOut<OpenCollector>> {
         //
         // UNSAFE: _port_sync_token ensures that no other thread can access the 8-bit GPIO port that
         // this pin belongs to.
@@ -240,11 +240,11 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     /// # Unsafe
     /// Caller must ensure there are no active GPIO buses that have pins in the same 8-bit port as
     /// this pin.
-    pub unsafe fn to_input_highz_no_sync(self) -> GpioPin<GpioInConfig<HighImpedance>> {
+    pub unsafe fn to_input_highz_no_sync(self) -> GpioPin<GpioIn<HighImpedance>> {
         *self.resistor_enable = 0;
         *self.direction = 0;
         GpioPin {
-            _config: GpioInConfig {
+            _config: GpioIn {
                 _input_mode: HighImpedance,
             },
 
@@ -253,7 +253,6 @@ impl<GpioConfig> GpioPin<GpioConfig> {
             direction: self.direction,
             resistor_enable: self.resistor_enable,
             port_in_use_mask: self.port_in_use_mask,
-            pin: self.pin,
         }
     }
 
@@ -265,12 +264,12 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     /// # Unsafe
     /// Caller must ensure there are no active GPIO buses that have pins in the same 8-bit port as
     /// this pin.
-    pub unsafe fn to_input_pullup_no_sync(self) -> GpioPin<GpioInConfig<PullUp>> {
+    pub unsafe fn to_input_pullup_no_sync(self) -> GpioPin<GpioIn<PullUp>> {
         *self.resistor_enable = 1;
         *self.direction = 0;
         *self.output = 1;
         GpioPin {
-            _config: GpioInConfig {
+            _config: GpioIn {
                 _input_mode: PullUp,
             },
             input: self.input,
@@ -278,7 +277,6 @@ impl<GpioConfig> GpioPin<GpioConfig> {
             direction: self.direction,
             resistor_enable: self.resistor_enable,
             port_in_use_mask: self.port_in_use_mask,
-            pin: self.pin,
         }
     }
 
@@ -290,12 +288,12 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     /// # Unsafe
     /// Caller must ensure there are no active GPIO buses that have pins in the same 8-bit port as
     /// this pin.
-    pub unsafe fn to_input_pulldown_no_sync(self) -> GpioPin<GpioInConfig<PullDown>> {
+    pub unsafe fn to_input_pulldown_no_sync(self) -> GpioPin<GpioIn<PullDown>> {
         *self.resistor_enable = 1;
         *self.direction = 0;
         *self.output = 0;
         GpioPin {
-            _config: GpioInConfig {
+            _config: GpioIn {
                 _input_mode: PullDown,
             },
             input: self.input,
@@ -303,7 +301,6 @@ impl<GpioConfig> GpioPin<GpioConfig> {
             direction: self.direction,
             resistor_enable: self.resistor_enable,
             port_in_use_mask: self.port_in_use_mask,
-            pin: self.pin,
         }
     }
 
@@ -315,11 +312,11 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     /// # Unsafe
     /// Caller must ensure there are no active GPIO buses that have pins in the same 8-bit port as
     /// this pin.
-    pub unsafe fn to_output_pushpull_no_sync(self) -> GpioPin<GpioOutConfig<PushPull>> {
+    pub unsafe fn to_output_pushpull_no_sync(self) -> GpioPin<GpioOut<PushPull>> {
         *self.output = 0;
         *self.direction = 1;
         GpioPin {
-            _config: GpioOutConfig {
+            _config: GpioOut {
                 _output_mode: PushPull,
             },
             input: self.input,
@@ -327,7 +324,6 @@ impl<GpioConfig> GpioPin<GpioConfig> {
             direction: self.direction,
             resistor_enable: self.resistor_enable,
             port_in_use_mask: self.port_in_use_mask,
-            pin: self.pin,
         }
     }
 
@@ -339,12 +335,12 @@ impl<GpioConfig> GpioPin<GpioConfig> {
     /// # Unsafe
     /// Caller must ensure there are no active GPIO buses that have pins in the same 8-bit port as
     /// this pin.
-    pub unsafe fn to_output_opencollector_no_sync(self) -> GpioPin<GpioOutConfig<OpenCollector>> {
+    pub unsafe fn to_output_opencollector_no_sync(self) -> GpioPin<GpioOut<OpenCollector>> {
         *self.output = 0;
         *self.direction = 1;
         *self.resistor_enable = 1;
         GpioPin {
-            _config: GpioOutConfig {
+            _config: GpioOut {
                 _output_mode: OpenCollector,
             },
             input: self.input,
@@ -352,12 +348,11 @@ impl<GpioConfig> GpioPin<GpioConfig> {
             direction: self.direction,
             resistor_enable: self.resistor_enable,
             port_in_use_mask: self.port_in_use_mask,
-            pin: self.pin,
         }
     }
 }
 
-impl<GpioConfig> GpioPortSync for GpioPin<GpioConfig> {
+impl<Mode: GpioMode> GpioPortSync for GpioPin<Mode> {
     /// Attempts to obtain a GpioPortInUseToken. This function will not succeed nested calls.
     ///
     /// # Returns
@@ -377,7 +372,7 @@ impl<GpioConfig> GpioPortSync for GpioPin<GpioConfig> {
     }
 }
 
-impl<InputMode> GpioPinInput for GpioPin<GpioInConfig<InputMode>> {
+impl<InputMode: GpioInputMode> GpioPinInput for GpioPin<GpioIn<InputMode>> {
     /// Reads the value of the GPIO pin.
     ///
     /// # Returns
@@ -388,7 +383,7 @@ impl<InputMode> GpioPinInput for GpioPin<GpioInConfig<InputMode>> {
     }
 }
 
-impl<OutputMode> GpioPinInput for GpioPin<GpioOutConfig<OutputMode>> {
+impl<OutputMode: GpioOutputMode> GpioPinInput for GpioPin<GpioOut<OutputMode>> {
     /// Reads the value of the GPIO pin.
     ///
     /// # Returns
@@ -399,7 +394,7 @@ impl<OutputMode> GpioPinInput for GpioPin<GpioOutConfig<OutputMode>> {
     }
 }
 
-impl GpioPinOutput for GpioPin<GpioOutConfig<PushPull>> {
+impl GpioPinOutput for GpioPin<GpioOut<PushPull>> {
     /// Sets the GPIO Pin high.
     ///
     /// # Arguments
@@ -470,7 +465,7 @@ impl GpioPinOutput for GpioPin<GpioOutConfig<PushPull>> {
     }
 }
 
-impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
+impl GpioPinOutput for GpioPin<GpioOut<OpenCollector>> {
     /// Sets the GPIO Pin high.
     ///
     /// # Arguments
@@ -560,10 +555,10 @@ impl GpioPinOutput for GpioPin<GpioOutConfig<OpenCollector>> {
 ///
 /// # Returns
 /// A GPIO Pin in the `Disabled` configuration.
-pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
-    let addr = get_port_address(pin.get_owning_port_name());
+pub fn gpio_pin_new<PinId: IdentifiablePin>(pin: PinId) -> GpioPin<Disabled> {
+    let addr = get_port_address(pin.get_port_name());
     let port = unsafe { &mut *(addr as *mut GpioPort) };
-    let pin_offset = pin.get_16_bit_port_offset() as u8;
+    let pin_offset = pin.get_offset();
 
     set_pin_function_to_gpio(port, pin_offset);
 
@@ -575,8 +570,13 @@ pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
         pin_offset,
     );
 
-    let in_use_shift = pin.get_owning_port_8_bit_index(Half::Lower) as u8;
-    let in_use_mask = if pin_offset < PortSize::Port8Bit.to_num_of_bits() as u8 {
+    let in_use_shift = if pin.get_port_name() == 'J' {
+        10
+    } else {
+        (pin.get_port_name() as u32 - 'A' as u32) * 2
+    };
+
+    let in_use_mask = if pin_offset < 8 {
         PORT_IN_USE_LOWER_HALF
     } else {
         PORT_IN_USE_UPPER_HALF
@@ -591,7 +591,6 @@ pub fn gpio_pin_new(pin: Pin) -> GpioPin<Disabled> {
             direction: &mut *(dir_addr as *mut u16),
             resistor_enable: &mut *(res_addr as *mut u16),
             port_in_use_mask: in_use,
-            pin: pin,
         }
     };
 

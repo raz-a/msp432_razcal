@@ -1,6 +1,8 @@
 //! # Bus
 //! The `bus` module includes structures and function to utilize GPIO as groups of pins.
 
+// TODO: Seal traits.
+
 //
 // TODO: Interrupts for Inputs
 //

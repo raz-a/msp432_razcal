@@ -24,7 +24,6 @@ pub use pin::*;
 //
 
 use super::PERIPHERAL_BASE;
-use crate::pin::*;
 use crate::registers::Reg16;
 use core::sync::atomic::{AtomicU16, Ordering};
 
@@ -32,40 +31,59 @@ use core::sync::atomic::{AtomicU16, Ordering};
 // Represents the different GPIO typestate configurations.
 //
 
+/// Represents a GPIO configuration mode.
+pub trait GpioMode: private::Sealed {}
+
+/// Represents a GPIO Input configuration mode.
+pub trait GpioInputMode: private::Sealed {}
+
+/// Represents a GPIO Output configuration mode.
+pub trait GpioOutputMode: private::Sealed {}
+
 /// A zero-sized typestate indicating a Disabled GPIO instance configuration. This is the
 /// default typestate when a new GPIO instance is created.
 pub struct Disabled;
+impl GpioMode for Disabled {}
 
 /// A zero-sized typestate indicating a GPIO instance input configuration.
 /// # Type Options
 /// `InputMode` indicates the type of input configuration. Can be of type `HighImpedance`,
 /// `PullUp`, or `PullDown`.
-pub struct GpioInConfig<InputMode> {
+pub struct GpioIn<InputMode: GpioInputMode> {
     _input_mode: InputMode,
 }
 
+impl<InputMode: GpioInputMode> GpioMode for GpioIn<InputMode> {}
+
 /// A zero-sized typestate indicating a high-Z GPIO instance input configuration.
 pub struct HighImpedance;
+impl GpioInputMode for HighImpedance {}
 
 /// A zero-sized typestate indicating a pull-up resistor GPIO instance input configuration.
 pub struct PullUp;
+impl GpioInputMode for PullUp {}
 
 /// A zero-sized typestate indicating a pull-down resistor GPIO instance input configuration.
 pub struct PullDown;
+impl GpioInputMode for PullDown {}
 
 /// A zero-sized typestate indicating a GPIO instance output configuration.
 /// # Type Options
 /// `OutputMode` indicates the type of output configuration. Can be of type `PushPull` or
 /// `OpenCollector`.
-pub struct GpioOutConfig<OutputMode> {
+pub struct GpioOut<OutputMode: GpioOutputMode> {
     _output_mode: OutputMode,
 }
 
+impl<OutputMode: GpioOutputMode> GpioMode for GpioOut<OutputMode> {}
+
 /// A zero-sized typestate indicating a push-pull GPIO instance output configuration.
 pub struct PushPull;
+impl GpioOutputMode for PushPull {}
 
 /// A zero-sized typestate indicating an open collector GPIO instance output configuration.
 pub struct OpenCollector;
+impl GpioOutputMode for OpenCollector {}
 
 //
 // Synchronization
@@ -181,19 +199,42 @@ struct GpioPort {
 // Module private functions.
 //
 
-/// Gets the GPIO port address for the pin provided.
+/// Gets the GPIO port address for the port provided.
 ///
 /// # Arguments
-/// `pin` - Provides a reference to the pin.
+/// `port` - Provides the port to get the GPIO port address for.
 ///
 /// # Returns
 /// The address of the port that the provided pin belongs to.
-fn get_port_address(port: PortName) -> u32 {
-    let port_j_index = PortName::PORTJ.get_16_bit_index();
-    let port_index = port.get_16_bit_index();
-    if port_index == port_j_index {
-        return PORT_MODULE + PORT_J_OFFSET;
-    }
+const fn get_port_address(port: char) -> u32 {
+    let port_offset = match port {
+        'A' => 0,
+        'B' => (core::mem::size_of::<GpioPort>() as u32),
+        'C' => (core::mem::size_of::<GpioPort>() as u32) * 2,
+        'D' => (core::mem::size_of::<GpioPort>() as u32) * 3,
+        'E' => (core::mem::size_of::<GpioPort>() as u32) * 4,
+        'J' => PORT_J_OFFSET,
+        _ => 0,
+    };
 
-    PORT_MODULE + (core::mem::size_of::<GpioPort>() as u32) * port_index as u32
+    PORT_MODULE + port_offset
 }
+
+//
+// For sealed traits.
+//
+
+mod private {
+    pub trait Sealed {}
+}
+
+impl private::Sealed for Disabled {}
+impl<InputMode: GpioInputMode> private::Sealed for GpioIn<InputMode> {}
+impl<OutputMode: GpioOutputMode> private::Sealed for GpioOut<OutputMode> {}
+
+impl private::Sealed for HighImpedance {}
+impl private::Sealed for PullUp {}
+impl private::Sealed for PullDown {}
+
+impl private::Sealed for PushPull {}
+impl private::Sealed for OpenCollector {}
