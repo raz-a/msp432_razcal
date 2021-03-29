@@ -29,8 +29,6 @@ const ALL_PINS_MASK: u16 = 0xFFFF;
 //
 
 /// Represents a port configured as a GPIO Bus.
-/// `GpioConfig` indicated the specific configuration mode the GPIO bus is in. Can be of type
-/// `Disabled`, `GpioIn`, or `GpioOut`.
 pub struct GpioPortBus<Mode: GpioMode> {
     /// The specfic GPIO configuration.
     _config: Mode,
