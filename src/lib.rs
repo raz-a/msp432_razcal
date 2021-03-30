@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(atomic_from_mut)]
 
 const PERIPHERAL_BASE: u32 = 0x4000_0000;
 const PERIPHERAL_END: u32 = 0x400F_FFFF;
