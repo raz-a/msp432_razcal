@@ -2,14 +2,6 @@
 //! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
-// TODO: Seal traits.
-//
-
-//
-// TODO: Get rid of _port_sync_token and get sync internally.
-//
-
-//
 // TODO: Sync problems to resolve.
 // 1. Transformation functions. What should happen if there is sync error? GpioPin is consumed...
 //      - Should the error return itself?
@@ -40,7 +32,7 @@
 
 use crate::gpio::*;
 use crate::pin::IdentifiablePin;
-use core::sync::atomic::{compiler_fence, AtomicU16, Ordering};
+use core::sync::atomic::{compiler_fence, Ordering};
 
 //
 // Traits
@@ -76,37 +68,35 @@ pub trait GpioPinOutput: private::Sealed {
 /// # Type Options
 /// `GpioConfig` indicated the specific configuration mode the GPIO pin is in. Can be of type
 /// `Disabled`, `GpioInConfig`, or `GpioOutConfig`.
-pub struct GpioPin<Mode: GpioMode> {
+pub struct GpioPin<Pin: IdentifiablePin, Mode: GpioMode> {
     /// The specfic GPIO configuration.
     _config: Mode,
 
-    /// The mask for the pin within the port.
-    pin_mask: u16,
-
-    /// The GPIO port registers.
-    port_regs: &'static mut GpioPort,
+    /// The actual pin.
+    pin: Pin,
 }
 
 /// The following implements state modification for GPIO Pin configurations.
-impl<Mode: GpioMode> GpioPin<Mode> {
+impl<Pin: IdentifiablePin, Mode: GpioMode> GpioPin<Pin, Mode> {
     /// Convert this instance into a high-impedance input pin.
     ///
     /// # Returns
     /// A GPIO Pin instance configured in high-impedance input mode.
-    pub fn to_input_highz(self) -> GpioPin<GpioIn<HighImpedance>> {
-        let resistor_enable = AtomicU16::from_mut(&mut self.port_regs.resistor_enable);
-        let direction = AtomicU16::from_mut(&mut self.port_regs.direction);
+    pub fn to_input_highz(self) -> GpioPin<Pin, GpioIn<HighImpedance>> {
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
 
-        resistor_enable.fetch_and(!self.pin_mask, Ordering::Relaxed);
-        direction.fetch_and(!self.pin_mask, Ordering::Relaxed);
+        port_regs
+            .resistor_enable
+            .fetch_and(!pin_mask, Ordering::Relaxed);
+        port_regs.direction.fetch_and(!pin_mask, Ordering::Relaxed);
 
         GpioPin {
             _config: GpioIn {
                 _input_mode: HighImpedance,
             },
 
-            pin_mask: self.pin_mask,
-            port_regs: self.port_regs,
+            pin: self.pin,
         }
     }
 
@@ -114,22 +104,22 @@ impl<Mode: GpioMode> GpioPin<Mode> {
     ///
     /// # Returns
     /// A GPIO Pin instance configured in pull-up input mode.
-    pub fn to_input_pullup(self) -> GpioPin<GpioIn<PullUp>> {
-        let resistor_enable = AtomicU16::from_mut(&mut self.port_regs.resistor_enable);
-        let direction = AtomicU16::from_mut(&mut self.port_regs.direction);
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
+    pub fn to_input_pullup(self) -> GpioPin<Pin, GpioIn<PullUp>> {
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
 
-        resistor_enable.fetch_or(self.pin_mask, Ordering::Relaxed);
-        direction.fetch_and(!self.pin_mask, Ordering::Relaxed);
-        output.fetch_or(self.pin_mask, Ordering::Relaxed);
+        port_regs
+            .resistor_enable
+            .fetch_or(pin_mask, Ordering::Relaxed);
+        port_regs.direction.fetch_and(!pin_mask, Ordering::Relaxed);
+        port_regs.output.fetch_or(pin_mask, Ordering::Relaxed);
 
         GpioPin {
             _config: GpioIn {
                 _input_mode: PullUp,
             },
 
-            pin_mask: self.pin_mask,
-            port_regs: self.port_regs,
+            pin: self.pin,
         }
     }
 
@@ -137,22 +127,22 @@ impl<Mode: GpioMode> GpioPin<Mode> {
     ///
     /// # Returns
     /// A GPIO Pin instance configured in pull-down input mode.
-    pub fn to_input_pulldown(self) -> GpioPin<GpioIn<PullDown>> {
-        let resistor_enable = AtomicU16::from_mut(&mut self.port_regs.resistor_enable);
-        let direction = AtomicU16::from_mut(&mut self.port_regs.direction);
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
+    pub fn to_input_pulldown(self) -> GpioPin<Pin, GpioIn<PullDown>> {
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
 
-        resistor_enable.fetch_or(self.pin_mask, Ordering::Relaxed);
-        direction.fetch_and(!self.pin_mask, Ordering::Relaxed);
-        output.fetch_and(!self.pin_mask, Ordering::Relaxed);
+        port_regs
+            .resistor_enable
+            .fetch_or(pin_mask, Ordering::Relaxed);
+        port_regs.direction.fetch_and(!pin_mask, Ordering::Relaxed);
+        port_regs.output.fetch_and(!pin_mask, Ordering::Relaxed);
 
         GpioPin {
             _config: GpioIn {
                 _input_mode: PullDown,
             },
 
-            pin_mask: self.pin_mask,
-            port_regs: self.port_regs,
+            pin: self.pin,
         }
     }
 
@@ -160,20 +150,19 @@ impl<Mode: GpioMode> GpioPin<Mode> {
     ///
     /// # Returns
     /// A GPIO Pin instance configured in push-pull output mode.
-    pub fn to_output_pushpull(self) -> GpioPin<GpioOut<PushPull>> {
-        let direction = AtomicU16::from_mut(&mut self.port_regs.direction);
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
+    pub fn to_output_pushpull(self) -> GpioPin<Pin, GpioOut<PushPull>> {
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
 
-        output.fetch_and(!self.pin_mask, Ordering::Relaxed);
-        direction.fetch_or(self.pin_mask, Ordering::Relaxed);
+        port_regs.output.fetch_and(!pin_mask, Ordering::Relaxed);
+        port_regs.direction.fetch_or(pin_mask, Ordering::Relaxed);
 
         GpioPin {
             _config: GpioOut {
                 _output_mode: PushPull,
             },
 
-            pin_mask: self.pin_mask,
-            port_regs: self.port_regs,
+            pin: self.pin,
         }
     }
 
@@ -181,87 +170,103 @@ impl<Mode: GpioMode> GpioPin<Mode> {
     ///
     /// # Returns
     /// A GPIO Pin instance configured in open collector output mode.
-    pub fn to_output_opencollector(self) -> GpioPin<GpioOut<OpenCollector>> {
-        let resistor_enable = AtomicU16::from_mut(&mut self.port_regs.resistor_enable);
-        let direction = AtomicU16::from_mut(&mut self.port_regs.direction);
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
+    pub fn to_output_opencollector(self) -> GpioPin<Pin, GpioOut<OpenCollector>> {
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
 
-        output.fetch_and(!self.pin_mask, Ordering::Relaxed);
-        direction.fetch_or(self.pin_mask, Ordering::Relaxed);
-        resistor_enable.fetch_or(self.pin_mask, Ordering::Relaxed);
+        port_regs.output.fetch_and(!pin_mask, Ordering::Relaxed);
+        port_regs.direction.fetch_or(pin_mask, Ordering::Relaxed);
+        port_regs
+            .resistor_enable
+            .fetch_or(pin_mask, Ordering::Relaxed);
 
         GpioPin {
             _config: GpioOut {
                 _output_mode: OpenCollector,
             },
 
-            pin_mask: self.pin_mask,
-            port_regs: self.port_regs,
+            pin: self.pin,
         }
     }
 }
 
-impl<InputMode: GpioInputMode> GpioPinInput for GpioPin<GpioIn<InputMode>> {
+impl<Pin: IdentifiablePin, InputMode: GpioInputMode> GpioPinInput
+    for GpioPin<Pin, GpioIn<InputMode>>
+{
     /// Reads the value of the GPIO pin.
     ///
     /// # Returns
     /// `true` if pin is high.
     /// `false` if pin is low.
     fn read(&self) -> bool {
-        (self.port_regs.input & self.pin_mask) != 0
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
+
+        (port_regs.input & pin_mask) != 0
     }
 }
 
-impl<OutputMode: GpioOutputMode> GpioPinInput for GpioPin<GpioOut<OutputMode>> {
+impl<Pin: IdentifiablePin, OutputMode: GpioOutputMode> GpioPinInput
+    for GpioPin<Pin, GpioOut<OutputMode>>
+{
     /// Reads the value of the GPIO pin.
     ///
     /// # Returns
     /// `true` if pin is high.
     /// `false` if pinis low.
     fn read(&self) -> bool {
-        (self.port_regs.input & self.pin_mask) != 0
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
+
+        (port_regs.input & pin_mask) != 0
     }
 }
 
-impl GpioPinOutput for GpioPin<GpioOut<PushPull>> {
+impl<Pin: IdentifiablePin> GpioPinOutput for GpioPin<Pin, GpioOut<PushPull>> {
     /// Sets the GPIO Pin high.
     fn set(&mut self) {
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
-        output.fetch_or(self.pin_mask, Ordering::Relaxed);
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
+
+        port_regs.output.fetch_or(pin_mask, Ordering::Relaxed);
     }
 
     /// Sets the GPIO Pin low.
     fn clear(&mut self) {
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
-        output.fetch_and(!self.pin_mask, Ordering::Relaxed);
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
+
+        port_regs.output.fetch_and(!pin_mask, Ordering::Relaxed);
     }
 
     /// Toggles the GPIO Pin.
     fn toggle(&mut self) {
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
-        output.fetch_xor(self.pin_mask, Ordering::Relaxed);
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
+
+        port_regs.output.fetch_xor(pin_mask, Ordering::Relaxed);
     }
 }
 
-impl GpioPinOutput for GpioPin<GpioOut<OpenCollector>> {
+impl<Pin: IdentifiablePin> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>> {
     /// Sets the GPIO Pin high.
     fn set(&mut self) {
-        let direction = AtomicU16::from_mut(&mut self.port_regs.direction);
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
 
-        direction.fetch_and(!self.pin_mask, Ordering::Relaxed);
-        compiler_fence(Ordering::SeqCst);
-        output.fetch_or(self.pin_mask, Ordering::Relaxed);
+        port_regs.direction.fetch_and(!pin_mask, Ordering::Relaxed);
+        compiler_fence(Ordering::Release);
+        port_regs.output.fetch_or(pin_mask, Ordering::Relaxed);
     }
 
     /// Sets the GPIO Pin low.
     fn clear(&mut self) {
-        let direction = AtomicU16::from_mut(&mut self.port_regs.direction);
-        let output = AtomicU16::from_mut(&mut self.port_regs.output);
+        let port_regs = get_gpio_port(self.pin.get_port_name());
+        let pin_mask = 1 << self.pin.get_offset();
 
-        output.fetch_and(!self.pin_mask, Ordering::Relaxed);
-        compiler_fence(Ordering::SeqCst);
-        direction.fetch_or(self.pin_mask, Ordering::Relaxed);
+        port_regs.output.fetch_and(!pin_mask, Ordering::Relaxed);
+        compiler_fence(Ordering::Release);
+        port_regs.direction.fetch_or(pin_mask, Ordering::Relaxed);
     }
 
     /// Toggles the GPIO Pin.
@@ -285,19 +290,13 @@ impl GpioPinOutput for GpioPin<GpioOut<OpenCollector>> {
 ///
 /// # Returns
 /// A GPIO Pin in the `Disabled` configuration.
-pub fn gpio_pin_new<PinId: IdentifiablePin>(pin: PinId) -> GpioPin<Disabled> {
-    let addr = get_port_address(pin.get_port_name());
-    let port = unsafe { &mut *(addr as *mut GpioPort) };
-    let pin_offset = pin.get_offset();
+pub fn gpio_pin_new<Pin: IdentifiablePin>(pin: Pin) -> GpioPin<Pin, Disabled> {
+    set_pin_function_to_gpio(get_gpio_port(pin.get_port_name()), pin.get_offset());
 
-    set_pin_function_to_gpio(port, pin_offset);
-    let gpio_pin = GpioPin {
+    GpioPin {
         _config: Disabled,
-        pin_mask: 1 << pin_offset,
-        port_regs: port,
-    };
-
-    gpio_pin
+        pin: pin,
+    }
 }
 
 //
@@ -311,34 +310,31 @@ pub fn gpio_pin_new<PinId: IdentifiablePin>(pin: PinId) -> GpioPin<Disabled> {
 /// `pin_offset` - Provides the offset in the port for the pin to configure.
 fn set_pin_function_to_gpio(port: &mut GpioPort, pin_offset: u8) {
     // Set function select bits to 00 (GPIO).
-    let pin_mask = 1u16 << pin_offset;
-    let sel0 = AtomicU16::from_mut(&mut port.select_0);
-    let sel1 = AtomicU16::from_mut(&mut port.select_1);
-
+    let pin_mask = 1 << pin_offset;
     let mut select_status = 0u16;
-    if (sel0.load(Ordering::Relaxed) & pin_mask) != 0 {
+    if (port.select_0.load(Ordering::Relaxed) & pin_mask) != 0 {
         select_status |= 1;
     }
 
-    if (sel1.load(Ordering::Relaxed) & pin_mask) != 0 {
+    if (port.select_1.load(Ordering::Relaxed) & pin_mask) != 0 {
         select_status |= 2;
     }
 
     match select_status {
         // Clear Select 0.
         1 => {
-            sel0.fetch_and(!pin_mask, Ordering::Relaxed);
+            port.select_0.fetch_and(!pin_mask, Ordering::Relaxed);
         }
 
         // Clear Select 1.
         2 => {
-            sel1.fetch_and(!pin_mask, Ordering::Relaxed);
+            port.select_1.fetch_and(!pin_mask, Ordering::Relaxed);
         }
 
         // Use the Select Compliment register to ensure atomic clearing of both Select 0 and 1.
         3 => {
-            let selc = AtomicU16::from_mut(&mut port.complement_selection);
-            selc.fetch_or(pin_mask, Ordering::Relaxed);
+            port.complement_selection
+                .fetch_or(pin_mask, Ordering::Relaxed);
         }
 
         _ => debug_assert_eq!(select_status, 0),
@@ -353,4 +349,4 @@ mod private {
     pub trait Sealed {}
 }
 
-impl<Mode: GpioMode> private::Sealed for GpioPin<Mode> {}
+impl<Pin: IdentifiablePin, Mode: GpioMode> private::Sealed for GpioPin<Pin, Mode> {}

@@ -16,6 +16,8 @@ mod pin;
 // Reexports
 //
 
+use core::sync::atomic::AtomicU16;
+
 //pub use bus::*;
 pub use pin::*;
 
@@ -93,18 +95,14 @@ const PORT_MODULE: u32 = PERIPHERAL_BASE + 0x4C00;
 /// Offset from the Base Port module address to PortJ.
 const PORT_J_OFFSET: u32 = 0x120;
 
-/// Port in use flag for a lower half port.
-const PORT_IN_USE_LOWER_HALF: u16 = 0x1;
-
-/// Port in use flag for a upper half port.
-const PORT_IN_USE_UPPER_HALF: u16 = 0x2;
-
 /// Port in use flag for a full port.
 // const PORT_IN_USE_FULL: u16 = PORT_IN_USE_LOWER_HALF | PORT_IN_USE_UPPER_HALF;
 
 //
 // Globals
 //
+
+//TODO: Update u16 and atomic u16 to be ReadOnly/ReadWrite/Reserved as appropriate.
 
 #[repr(C)]
 /// GPIO Register layout
@@ -115,37 +113,37 @@ struct GpioPort {
     /// Drives the level of the GPIO pins when the direction bit for a corresponding pin is 1.
     /// If direction = 0 and resistor_enable = 1, indicates the level of the internal resistor
     /// (pull-up = 1, pull-down = 0)
-    output: u16,
+    output: AtomicU16,
 
     /// The direction of the pins. Input = 0, Output = 1.
-    direction: u16,
+    direction: AtomicU16,
 
     /// If 1, enables either the pull-up or pull-down resistor for the corresponding pins.
     /// Does nothing when direction = 0.
-    resistor_enable: u16,
+    resistor_enable: AtomicU16,
 
     /// If the specific port supports high drive strength, enables high drive strength mode.
     /// Otherwise does nothing.
-    drive_strength: u16,
+    drive_strength: AtomicU16,
 
     /// The lower bit of the function select for a given pin.
-    select_0: u16,
+    select_0: AtomicU16,
 
     /// The upper bit of the function select for a given pin.
-    select_1: u16,
+    select_1: AtomicU16,
 
     /// Unused.
     reserved: (u16, u16, u16, u16),
 
     /// If 1 is written, inverts both bits of the function select for a given pin.
-    complement_selection: u16,
+    complement_selection: AtomicU16,
 
     /// If 0, the interrupt flag will be set on a low to high transition.
     /// If 1, the interrupt flag will be set on a high to low transition.
-    interrupt_edge_select: u16,
+    interrupt_edge_select: AtomicU16,
 
     /// Enables interrupts for a given pin.
-    interrupt_enable: u16,
+    interrupt_enable: AtomicU16,
 
     /// Indicates whether a high to low or low to high transition occured when interrupts are
     /// enabled for a given pin.
@@ -166,8 +164,8 @@ struct GpioPort {
 ///
 /// # Returns
 /// The address of the port that the provided pin belongs to.
-const fn get_port_address(port: char) -> u32 {
-    let port_offset = match port {
+fn get_gpio_port(port_name: char) -> &'static mut GpioPort {
+    let port_offset = match port_name {
         'A' => 0,
         'B' => (core::mem::size_of::<GpioPort>() as u32),
         'C' => (core::mem::size_of::<GpioPort>() as u32) * 2,
@@ -177,7 +175,8 @@ const fn get_port_address(port: char) -> u32 {
         _ => 0,
     };
 
-    PORT_MODULE + port_offset
+    let addr = PORT_MODULE + port_offset;
+    unsafe { &mut *(addr as *mut GpioPort) }
 }
 
 //
