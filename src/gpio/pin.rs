@@ -308,7 +308,7 @@ pub fn gpio_pin_new<Pin: IdentifiablePin>(pin: Pin) -> GpioPin<Pin, Disabled> {
 /// # Arguments
 /// `port` - Provides the GPIO Port registers to configure the pins.
 /// `pin_offset` - Provides the offset in the port for the pin to configure.
-fn set_pin_function_to_gpio(port: &mut GpioPort, pin_offset: u8) {
+fn set_pin_function_to_gpio(port: &GpioPort, pin_offset: u8) {
     // Set function select bits to 00 (GPIO).
     let pin_mask = 1 << pin_offset;
     let mut select_status = 0u16;

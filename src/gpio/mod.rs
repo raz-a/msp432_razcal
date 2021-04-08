@@ -164,7 +164,7 @@ struct GpioPort {
 ///
 /// # Returns
 /// The address of the port that the provided pin belongs to.
-fn get_gpio_port(port_name: char) -> &'static mut GpioPort {
+fn get_gpio_port(port_name: char) -> &'static GpioPort {
     let port_offset = match port_name {
         'A' => 0,
         'B' => (core::mem::size_of::<GpioPort>() as u32),
@@ -176,7 +176,7 @@ fn get_gpio_port(port_name: char) -> &'static mut GpioPort {
     };
 
     let addr = PORT_MODULE + port_offset;
-    unsafe { &mut *(addr as *mut GpioPort) }
+    unsafe { &*(addr as *const GpioPort) }
 }
 
 //
