@@ -33,3 +33,20 @@ pub use port::*;
     razcal_msp432_package = "lqfp"
 )))]
 compile_error!("Msp432 package must be defined.");
+
+//
+// Traits.
+//
+
+/// Describes an entity that is a component of a port.
+pub trait PortComponent: private::Sealed {
+    /// Gets the mask of this entity within its owning port.
+    fn get_port_mask(&self) -> u16;
+
+    /// Gets the inverse of the mask of this entity within its owning port.
+    fn get_port_clear_mask(&self) -> u16;
+}
+
+mod private {
+    pub trait Sealed {}
+}

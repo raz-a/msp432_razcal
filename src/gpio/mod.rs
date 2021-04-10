@@ -16,14 +16,14 @@ mod pin;
 // Reexports
 //
 
-use core::sync::atomic::AtomicU16;
-
 //pub use bus::*;
 pub use pin::*;
 
 //
 // Dependencies
 //
+
+use crate::registers::{ReadOnly, ReadWrite, Reserved};
 
 use super::PERIPHERAL_BASE;
 
@@ -108,49 +108,49 @@ const PORT_J_OFFSET: u32 = 0x120;
 /// GPIO Register layout
 struct GpioPort {
     /// Level of the GPIO pins.
-    input: u16,
+    input: ReadOnly<u16>,
 
     /// Drives the level of the GPIO pins when the direction bit for a corresponding pin is 1.
     /// If direction = 0 and resistor_enable = 1, indicates the level of the internal resistor
     /// (pull-up = 1, pull-down = 0)
-    output: AtomicU16,
+    output: ReadWrite<u16>,
 
     /// The direction of the pins. Input = 0, Output = 1.
-    direction: AtomicU16,
+    direction: ReadWrite<u16>,
 
     /// If 1, enables either the pull-up or pull-down resistor for the corresponding pins.
     /// Does nothing when direction = 0.
-    resistor_enable: AtomicU16,
+    resistor_enable: ReadWrite<u16>,
 
     /// If the specific port supports high drive strength, enables high drive strength mode.
     /// Otherwise does nothing.
-    drive_strength: AtomicU16,
+    drive_strength: ReadWrite<u16>,
 
     /// The lower bit of the function select for a given pin.
-    select_0: AtomicU16,
+    select_0: ReadWrite<u16>,
 
     /// The upper bit of the function select for a given pin.
-    select_1: AtomicU16,
+    select_1: ReadWrite<u16>,
 
     /// Unused.
-    reserved: (u16, u16, u16, u16),
+    reserved: (Reserved<u16>, Reserved<u16>, Reserved<u16>, Reserved<u16>),
 
     /// If 1 is written, inverts both bits of the function select for a given pin.
-    complement_selection: AtomicU16,
+    complement_selection: ReadWrite<u16>,
 
     /// If 0, the interrupt flag will be set on a low to high transition.
     /// If 1, the interrupt flag will be set on a high to low transition.
-    interrupt_edge_select: AtomicU16,
+    interrupt_edge_select: ReadWrite<u16>,
 
     /// Enables interrupts for a given pin.
-    interrupt_enable: AtomicU16,
+    interrupt_enable: ReadWrite<u16>,
 
     /// Indicates whether a high to low or low to high transition occured when interrupts are
     /// enabled for a given pin.
-    interrupt_flag: u16,
+    interrupt_flag: ReadOnly<u16>,
 
     /// Unused.
-    reserved2: u16,
+    reserved2: Reserved<u16>,
 }
 
 //
