@@ -2,6 +2,26 @@
 //! The `pin` module includes structures and functions to abstract pins as software resources.
 
 //
+// TODO: Rename IdenfiablePin to PinId
+//
+
+//
+// TODO: Pin implies default (GPIO mode)
+//
+
+//
+// TODO: Crate public "AlternatePin" type. <- Implements PinId
+//
+
+//
+// TODO: Macro that implements "ToAlternate" functions for the correct pins.
+//
+
+//
+// TODO: New sealed trait: PinX. Only Pin<...> should implement it, inherits PinId.
+//
+
+//
 // Dependencies.
 //
 

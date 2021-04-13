@@ -2,21 +2,8 @@
 //! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
-// TODO: Sync problems to resolve.
-// 1. Transformation functions. What should happen if there is sync error? GpioPin is consumed...
-//      - Should the error return itself?
+// TODO: Crate public function that changes select mode (and knows where its going from)
 //
-// 2. Write functions. We want a compile time guarantee (for the safe functions) that these functions
-//      can only be called if ITS port lock is held.
-//
-//      - Create "synced" versions of each type. These synced version can be held in a GpioPortInUseToken.
-//                ^ Trait = GpioSyncedComponent
-//      - Remove GpioPortSync.
-//      - Create global functions that take in GpioComponent <new trait> types and will return a set
-//        of GpioSyncedComponents. These components have functions that are allowed to be called only when
-//        synced.
-//
-//      OR - Just [debug only] runtime check that the correct token is being used?
 
 //
 // TODO: Interrupts for Inputs
@@ -33,6 +20,10 @@
 use crate::gpio::*;
 use crate::pin::IdentifiablePin;
 use core::sync::atomic::{compiler_fence, Ordering};
+
+//
+// TODO: use PinX.
+//
 
 //
 // Traits
@@ -209,6 +200,10 @@ impl<Pin: IdentifiablePin, Mode: GpioMode> GpioPin<Pin, Mode> {
             pin: self.pin,
         }
     }
+
+    //
+    // TODO: "Destructor" that gets the original Pin back out.
+    //
 }
 
 impl<Pin: IdentifiablePin, InputMode: GpioInputMode> GpioPinInput
@@ -312,6 +307,10 @@ impl<Pin: IdentifiablePin> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>
 
 //
 // Public functions
+//
+
+//
+// TODO: GpioPin::new()
 //
 
 /// Allocates a new GPIO configured Pin.
