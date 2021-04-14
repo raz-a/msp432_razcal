@@ -196,9 +196,13 @@ impl<Pin: PinX, Mode: GpioMode> GpioPin<Pin, Mode> {
         }
     }
 
-    //
-    // TODO: "Destructor" that gets the original Pin back out.
-    //
+    /// Break down the GPIO Pin back to its original Pin structure.
+    ///
+    /// # Returns
+    /// The Pin structure contained by the GPIO Pin.
+    pub fn extract_pin(self) -> Pin {
+        self.to_input_highz().pin
+    }
 }
 
 impl<Pin: PinX, InputMode: GpioInputMode> GpioPinInput for GpioPin<Pin, GpioIn<InputMode>> {
