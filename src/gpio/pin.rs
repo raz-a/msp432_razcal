@@ -17,13 +17,8 @@
 // Dependencies
 //
 
-use crate::gpio::*;
-use crate::pin::IdentifiablePin;
+use crate::{gpio::*, pin::PinX};
 use core::sync::atomic::{compiler_fence, Ordering};
-
-//
-// TODO: use PinX.
-//
 
 //
 // Traits
@@ -59,7 +54,7 @@ pub trait GpioPinOutput: private::Sealed {
 /// # Type Options
 /// `GpioConfig` indicated the specific configuration mode the GPIO pin is in. Can be of type
 /// `Disabled`, `GpioInConfig`, or `GpioOutConfig`.
-pub struct GpioPin<Pin: IdentifiablePin, Mode: GpioMode> {
+pub struct GpioPin<Pin: PinX, Mode: GpioMode> {
     /// The specfic GPIO configuration.
     _config: Mode,
 
@@ -68,7 +63,7 @@ pub struct GpioPin<Pin: IdentifiablePin, Mode: GpioMode> {
 }
 
 /// The following implements state modification for GPIO Pin configurations.
-impl<Pin: IdentifiablePin, Mode: GpioMode> GpioPin<Pin, Mode> {
+impl<Pin: PinX, Mode: GpioMode> GpioPin<Pin, Mode> {
     /// Convert this instance into a high-impedance input pin.
     ///
     /// # Returns
@@ -206,9 +201,7 @@ impl<Pin: IdentifiablePin, Mode: GpioMode> GpioPin<Pin, Mode> {
     //
 }
 
-impl<Pin: IdentifiablePin, InputMode: GpioInputMode> GpioPinInput
-    for GpioPin<Pin, GpioIn<InputMode>>
-{
+impl<Pin: PinX, InputMode: GpioInputMode> GpioPinInput for GpioPin<Pin, GpioIn<InputMode>> {
     /// Reads the value of the GPIO pin.
     ///
     /// # Returns
@@ -221,9 +214,7 @@ impl<Pin: IdentifiablePin, InputMode: GpioInputMode> GpioPinInput
     }
 }
 
-impl<Pin: IdentifiablePin, OutputMode: GpioOutputMode> GpioPinInput
-    for GpioPin<Pin, GpioOut<OutputMode>>
-{
+impl<Pin: PinX, OutputMode: GpioOutputMode> GpioPinInput for GpioPin<Pin, GpioOut<OutputMode>> {
     /// Reads the value of the GPIO pin.
     ///
     /// # Returns
@@ -236,7 +227,7 @@ impl<Pin: IdentifiablePin, OutputMode: GpioOutputMode> GpioPinInput
     }
 }
 
-impl<Pin: IdentifiablePin> GpioPinOutput for GpioPin<Pin, GpioOut<PushPull>> {
+impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<PushPull>> {
     /// Sets the GPIO Pin high.
     fn set(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
@@ -265,7 +256,7 @@ impl<Pin: IdentifiablePin> GpioPinOutput for GpioPin<Pin, GpioOut<PushPull>> {
     }
 }
 
-impl<Pin: IdentifiablePin> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>> {
+impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>> {
     /// Sets the GPIO Pin high.
     fn set(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
@@ -305,27 +296,21 @@ impl<Pin: IdentifiablePin> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>
     }
 }
 
-//
-// Public functions
-//
+impl<Pin: PinX> GpioPin<Pin, Disabled> {
+    /// Allocates a new GPIO configured Pin.
+    ///
+    /// # Arguments
+    /// `pin` - Provides the pin to be configred for GPIO.
+    ///
+    /// # Returns
+    /// A GPIO Pin in the `Disabled` configuration.
+    pub fn new(pin: Pin) -> Self {
+        set_pin_function_to_gpio(get_gpio_port(pin.get_port_name()), pin.get_offset());
 
-//
-// TODO: GpioPin::new()
-//
-
-/// Allocates a new GPIO configured Pin.
-///
-/// # Arguments
-/// `pin` - Provides the pin to be configred for GPIO.
-///
-/// # Returns
-/// A GPIO Pin in the `Disabled` configuration.
-pub fn gpio_pin_new<Pin: IdentifiablePin>(pin: Pin) -> GpioPin<Pin, Disabled> {
-    set_pin_function_to_gpio(get_gpio_port(pin.get_port_name()), pin.get_offset());
-
-    GpioPin {
-        _config: Disabled,
-        pin: pin,
+        GpioPin {
+            _config: Disabled,
+            pin: pin,
+        }
     }
 }
 
@@ -378,4 +363,4 @@ mod private {
     pub trait Sealed {}
 }
 
-impl<Pin: IdentifiablePin, Mode: GpioMode> private::Sealed for GpioPin<Pin, Mode> {}
+impl<Pin: PinX, Mode: GpioMode> private::Sealed for GpioPin<Pin, Mode> {}

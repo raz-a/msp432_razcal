@@ -2,10 +2,6 @@
 //! The `pin` module includes structures and functions to abstract pins as software resources.
 
 //
-// TODO: Rename IdenfiablePin to PinId
-//
-
-//
 // TODO: Pin implies default (GPIO mode)
 //
 
@@ -15,10 +11,6 @@
 
 //
 // TODO: Macro that implements "ToAlternate" functions for the correct pins.
-//
-
-//
-// TODO: New sealed trait: PinX. Only Pin<...> should implement it, inherits PinId.
 //
 
 //
@@ -35,7 +27,7 @@ use super::PortComponent;
 //
 
 /// Describes a pin that can be identified by its port and pin offset.
-pub trait IdentifiablePin: private::Sealed + PortComponent {
+pub trait PinId: private::Sealed + PortComponent {
     /// Gets the name of the port this pin belongs to.
     ///
     /// # Returns
@@ -48,6 +40,8 @@ pub trait IdentifiablePin: private::Sealed + PortComponent {
     /// Offset.
     fn get_offset(&self) -> u8;
 }
+
+pub trait PinX: private::Sealed + PinId {}
 
 //
 // Structures.
@@ -80,7 +74,7 @@ impl<const PORT_NAME: char, const OFFSET: u8> PortComponent for Pin<PORT_NAME, O
     }
 }
 
-impl<const PORT_NAME: char, const OFFSET: u8> IdentifiablePin for Pin<PORT_NAME, OFFSET> {
+impl<const PORT_NAME: char, const OFFSET: u8> PinId for Pin<PORT_NAME, OFFSET> {
     /// Gets the name of the port this pin belongs to.
     ///
     /// # Returns
@@ -97,6 +91,8 @@ impl<const PORT_NAME: char, const OFFSET: u8> IdentifiablePin for Pin<PORT_NAME,
         OFFSET
     }
 }
+
+impl<const PORT_NAME: char, const OFFSET: u8> PinX for Pin<PORT_NAME, OFFSET> {}
 
 macro_rules! define_pinset {
     ($(($port:tt, $port_char:literal, $($pin:literal),+)),+) => {
