@@ -6,7 +6,7 @@
 //
 
 //
-// TODO: Crate public "AlternatePin" type. <- Implements PinId
+// TODO: Crate public "AlternatePin" type. <- Implements PinId + PinIdWithMode
 //
 
 //
@@ -21,10 +21,6 @@ use core::marker::PhantomData;
 use paste::paste;
 
 use super::PortComponent;
-
-//
-// Traits
-//
 
 /// Describes a pin that can be identified by its port and pin offset.
 pub trait PinId: private::Sealed + PortComponent {
@@ -41,11 +37,15 @@ pub trait PinId: private::Sealed + PortComponent {
     fn get_offset(&self) -> u8;
 }
 
+//
+// Main Pin structure.
+//
+
+/// A trait that is a shorthand for the `Pin<...>` structure.
 pub trait PinX: private::Sealed + PinId {}
 
-//
-// Structures.
-//
+// - Private Note -
+// The PinX trait also differentiates the main Pin structure from the the alternate pin structures.
 
 /// Represents a pin on the MCU.
 pub struct Pin<const PORT_NAME: char, const OFFSET: u8> {
@@ -89,6 +89,16 @@ impl<const PORT_NAME: char, const OFFSET: u8> PinId for Pin<PORT_NAME, OFFSET> {
     /// Offset
     fn get_offset(&self) -> u8 {
         OFFSET
+    }
+}
+
+impl<const PORT_NAME: char, const OFFSET: u8> PinIdWithMode for Pin<PORT_NAME, OFFSET> {
+    /// Gets the pin mode of the current pin.
+    ///
+    /// # Returns
+    /// PinMode.
+    fn get_mode(&self) -> PinMode {
+        PinMode::DefaultGpio
     }
 }
 
@@ -173,6 +183,27 @@ define_pinset!(
     (e, 'E', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
     (j, 'J', 0, 1, 2, 3, 4, 5)
 );
+
+//
+// Alternate Pin Mode support.
+//
+
+/// Defines the possible modes for a pin.
+pub(crate) enum PinMode {
+    DefaultGpio = 0,
+    Alternate1 = 1,
+    Alternate2 = 2,
+    Alternate3 = 3,
+}
+
+/// Extension to the PinId trait to include the pin mode.
+pub(crate) trait PinIdWithMode: PinId + private::Sealed {
+    /// Gets the pin mode of the current pin.
+    ///
+    /// # Returns
+    /// PinMode.
+    fn get_mode(&self) -> PinMode;
+}
 
 //
 // For sealed traits.

@@ -2,7 +2,6 @@
 //! The `gpio` module includes structures and functions to utilize General Purpose Input and Output
 //! (GPIO) pins.
 
-// TODO: Make sure GPIO isn't tied too much to Pin interface.
 // TODO: Bus/pin interaction.
 
 //
@@ -101,8 +100,6 @@ const PORT_J_OFFSET: u32 = 0x120;
 //
 // Globals
 //
-
-//TODO: Update u16 and atomic u16 to be ReadOnly/ReadWrite/Reserved as appropriate.
 
 #[repr(C)]
 /// GPIO Register layout

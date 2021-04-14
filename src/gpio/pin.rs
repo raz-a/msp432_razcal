@@ -2,10 +2,6 @@
 //! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
-// TODO: Crate public function that changes select mode (and knows where its going from)
-//
-
-//
 // TODO: Interrupts for Inputs
 //
 
@@ -17,7 +13,10 @@
 // Dependencies
 //
 
-use crate::{gpio::*, pin::PinX};
+use crate::{
+    gpio::*,
+    pin::{PinIdWithMode, PinMode, PinX},
+};
 use core::sync::atomic::{compiler_fence, Ordering};
 
 //
@@ -309,9 +308,7 @@ impl<Pin: PinX> GpioPin<Pin, Disabled> {
     /// # Returns
     /// A GPIO Pin in the `Disabled` configuration.
     pub fn new(pin: Pin) -> Self {
-        set_pin_function_to_gpio(get_gpio_port(pin.get_port_name()), pin.get_offset());
-
-        GpioPin {
+        Self {
             _config: Disabled,
             pin: pin,
         }
@@ -319,40 +316,34 @@ impl<Pin: PinX> GpioPin<Pin, Disabled> {
 }
 
 //
-// Private functions
+// Crate functions
 //
 
-/// Configures a pin to GPIO mode.
+/// Configures a pin to a given mode.
 ///
 /// # Arguments
-/// `port` - Provides the GPIO Port registers to configure the pins.
-/// `pin_offset` - Provides the offset in the port for the pin to configure.
-fn set_pin_function_to_gpio(port: &GpioPort, pin_offset: u8) {
-    // Set function select bits to 00 (GPIO).
-    let pin_mask = 1 << pin_offset;
-    let mut select_status = 0u16;
-    if (port.select_0.read() & pin_mask) != 0 {
-        select_status |= 1;
-    }
+/// `pin` - Provides the pin to configure
+/// `desired_mode` - Provides the desired mode of the pin.
+pub(crate) fn set_pin_function<Pin: PinIdWithMode>(pin: Pin, desired_mode: PinMode) {
+    let port = get_gpio_port(pin.get_port_name());
 
-    if (port.select_1.read() & pin_mask) != 0 {
-        select_status |= 2;
-    }
+    let select_status = (desired_mode as usize) ^ (pin.get_mode() as usize);
 
     match select_status {
-        // Clear Select 0.
+        // Toggle Select 0.
         1 => {
-            port.select_0.modify(|value| value & !pin_mask);
+            port.select_0.modify(|value| value ^ pin.get_port_mask());
         }
 
-        // Clear Select 1.
+        // Toggle Select 1.
         2 => {
-            port.select_1.modify(|value| value & !pin_mask);
+            port.select_1.modify(|value| value ^ pin.get_port_mask());
         }
 
-        // Use the Select Compliment register to ensure atomic clearing of both Select 0 and 1.
+        // Use the Select Compliment register to ensure atomic toggling of both Select 0 and 1.
         3 => {
-            port.complement_selection.modify(|value| value | pin_mask);
+            port.complement_selection
+                .modify(|value| value | pin.get_port_mask());
         }
 
         _ => debug_assert_eq!(select_status, 0),
