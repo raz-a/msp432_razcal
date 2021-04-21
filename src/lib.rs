@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(asm)]
 #![allow(dead_code)]
 
 const PERIPHERAL_BASE: u32 = 0x4000_0000;
@@ -87,5 +88,6 @@ mod registers {
 }
 
 pub mod gpio;
+pub mod interrupt;
 pub mod pin;
 pub mod watchdog;
