@@ -3,8 +3,13 @@
 //! constants that hold the location of memory mapped registers.
 
 use core::marker::PhantomData;
-
 use vcell::VolatileCell;
+
+pub const PERIPHERAL_BASE: u32 = 0x4000_0000;
+pub const PERIPHERAL_END: u32 = 0x400F_FFFF;
+
+pub const PERIPHERAL_BITBAND_BASE: u32 = 0x4200_0000;
+pub const PERIPHERAL_BITBAND_END: u32 = 0x43FF_FFFF;
 
 fn peripheral_to_bitband_alias(address: u32, bit: u8) -> u32 {
     debug_assert!(address >= PERIPHERAL_BASE);
@@ -157,12 +162,6 @@ impl<T: RegBase> BitBandReadWrite<T> {
         self.write(modified_value);
     }
 }
-
-pub const PERIPHERAL_BASE: u32 = 0x4000_0000;
-pub const PERIPHERAL_END: u32 = 0x400F_FFFF;
-
-pub const PERIPHERAL_BITBAND_BASE: u32 = 0x4200_0000;
-pub const PERIPHERAL_BITBAND_END: u32 = 0x43FF_FFFF;
 
 //
 // For sealed traits.
