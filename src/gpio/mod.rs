@@ -18,13 +18,11 @@ mod pin;
 //pub use bus::*;
 pub use pin::*;
 
+use crate::registers::{ReadOnly, ReadWrite, Reserved, PERIPHERAL_BASE};
+
 //
 // Dependencies
 //
-
-use crate::registers::{ReadOnly, ReadWrite, Reserved};
-
-use super::PERIPHERAL_BASE;
 
 //
 // Represents the different GPIO typestate configurations.
@@ -90,12 +88,12 @@ impl GpioOutputMode for OpenCollector {}
 
 /// Base address of the GPIO Port modules.
 const PORT_MODULE: u32 = PERIPHERAL_BASE + 0x4C00;
-
-/// Offset from the Base Port module address to PortJ.
-const PORT_J_OFFSET: u32 = 0x120;
-
-/// Port in use flag for a full port.
-// const PORT_IN_USE_FULL: u16 = PORT_IN_USE_LOWER_HALF | PORT_IN_USE_UPPER_HALF;
+const PORT_A: u32 = PORT_MODULE;
+const PORT_B: u32 = PORT_A + core::mem::size_of::<GpioPort>() as u32;
+const PORT_C: u32 = PORT_B + core::mem::size_of::<GpioPort>() as u32;
+const PORT_D: u32 = PORT_C + core::mem::size_of::<GpioPort>() as u32;
+const PORT_E: u32 = PORT_D + core::mem::size_of::<GpioPort>() as u32;
+const PORT_J: u32 = PORT_MODULE + 0x120;
 
 //
 // Globals
@@ -162,17 +160,16 @@ struct GpioPort {
 /// # Returns
 /// The address of the port that the provided pin belongs to.
 fn get_gpio_port(port_name: char) -> &'static GpioPort {
-    let port_offset = match port_name {
-        'A' => 0,
-        'B' => (core::mem::size_of::<GpioPort>() as u32),
-        'C' => (core::mem::size_of::<GpioPort>() as u32) * 2,
-        'D' => (core::mem::size_of::<GpioPort>() as u32) * 3,
-        'E' => (core::mem::size_of::<GpioPort>() as u32) * 4,
-        'J' => PORT_J_OFFSET,
+    let addr = match port_name {
+        'A' => PORT_A,
+        'B' => PORT_B,
+        'C' => PORT_C,
+        'D' => PORT_D,
+        'E' => PORT_E,
+        'J' => PORT_J,
         _ => 0,
     };
 
-    let addr = PORT_MODULE + port_offset;
     unsafe { &*(addr as *const GpioPort) }
 }
 
