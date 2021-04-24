@@ -19,7 +19,6 @@
 
 use crate::{
     gpio::*,
-    interrupt::single_proc_critical_section,
     pin::{PinIdWithMode, PinMode, PinX},
 };
 use core::sync::atomic::{compiler_fence, Ordering};
@@ -75,15 +74,15 @@ impl<Pin: PinX, Mode: GpioMode> GpioPin<Pin, Mode> {
     pub fn to_input_highz(self) -> GpioPin<Pin, GpioIn<HighImpedance>> {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .resistor_enable
-                .modify(|value| value & self.pin.get_port_clear_mask());
+        port_regs
+            .resistor_enable
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
-            port_regs
-                .direction
-                .modify(|value| value & self.pin.get_port_clear_mask());
-        });
+        port_regs
+            .direction
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
         GpioPin {
             _config: GpioIn {
@@ -101,19 +100,20 @@ impl<Pin: PinX, Mode: GpioMode> GpioPin<Pin, Mode> {
     pub fn to_input_pullup(self) -> GpioPin<Pin, GpioIn<PullUp>> {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .resistor_enable
-                .modify(|value| value | self.pin.get_port_mask());
+        port_regs
+            .resistor_enable
+            .get_bitband(self.pin.get_offset())
+            .write(true);
 
-            port_regs
-                .direction
-                .modify(|value| value & self.pin.get_port_clear_mask());
+        port_regs
+            .direction
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
-            port_regs
-                .output
-                .modify(|value| value | self.pin.get_port_mask());
-        });
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(true);
 
         GpioPin {
             _config: GpioIn {
@@ -131,19 +131,20 @@ impl<Pin: PinX, Mode: GpioMode> GpioPin<Pin, Mode> {
     pub fn to_input_pulldown(self) -> GpioPin<Pin, GpioIn<PullDown>> {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .resistor_enable
-                .modify(|value| value | self.pin.get_port_mask());
+        port_regs
+            .resistor_enable
+            .get_bitband(self.pin.get_offset())
+            .write(true);
 
-            port_regs
-                .direction
-                .modify(|value| value & self.pin.get_port_clear_mask());
+        port_regs
+            .direction
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
-            port_regs
-                .output
-                .modify(|value| value & self.pin.get_port_clear_mask());
-        });
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
         GpioPin {
             _config: GpioIn {
@@ -161,15 +162,15 @@ impl<Pin: PinX, Mode: GpioMode> GpioPin<Pin, Mode> {
     pub fn to_output_pushpull(self) -> GpioPin<Pin, GpioOut<PushPull>> {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .output
-                .modify(|value| value & self.pin.get_port_clear_mask());
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
-            port_regs
-                .direction
-                .modify(|value| value | self.pin.get_port_mask());
-        });
+        port_regs
+            .direction
+            .get_bitband(self.pin.get_offset())
+            .write(true);
 
         GpioPin {
             _config: GpioOut {
@@ -187,19 +188,20 @@ impl<Pin: PinX, Mode: GpioMode> GpioPin<Pin, Mode> {
     pub fn to_output_opencollector(self) -> GpioPin<Pin, GpioOut<OpenCollector>> {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .output
-                .modify(|value| value & self.pin.get_port_clear_mask());
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
-            port_regs
-                .direction
-                .modify(|value| value | self.pin.get_port_mask());
+        port_regs
+            .direction
+            .get_bitband(self.pin.get_offset())
+            .write(true);
 
-            port_regs
-                .resistor_enable
-                .modify(|value| value | self.pin.get_port_mask())
-        });
+        port_regs
+            .resistor_enable
+            .get_bitband(self.pin.get_offset())
+            .write(true);
 
         GpioPin {
             _config: GpioOut {
@@ -227,8 +229,7 @@ impl<Pin: PinX, InputMode: GpioInputMode> GpioPinInput for GpioPin<Pin, GpioIn<I
     /// `false` if pin is low.
     fn read(&self) -> bool {
         let port_regs = get_gpio_port(self.pin.get_port_name());
-
-        (port_regs.input.read() & self.pin.get_port_mask()) != 0
+        port_regs.input.get_bitband(self.pin.get_offset()).read()
     }
 }
 
@@ -240,8 +241,7 @@ impl<Pin: PinX, OutputMode: GpioOutputMode> GpioPinInput for GpioPin<Pin, GpioOu
     /// `false` if pinis low.
     fn read(&self) -> bool {
         let port_regs = get_gpio_port(self.pin.get_port_name());
-
-        (port_regs.input.read() & self.pin.get_port_mask()) != 0
+        port_regs.input.get_bitband(self.pin.get_offset()).read()
     }
 }
 
@@ -250,33 +250,30 @@ impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<PushPull>> {
     fn set(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .output
-                .modify(|value| value | self.pin.get_port_mask())
-        });
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(true);
     }
 
     /// Sets the GPIO Pin low.
     fn clear(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .output
-                .modify(|value| value & self.pin.get_port_clear_mask())
-        });
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(false);
     }
 
     /// Toggles the GPIO Pin.
     fn toggle(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .output
-                .modify(|value| value ^ self.pin.get_port_mask())
-        });
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .modify(|value| !value);
     }
 }
 
@@ -285,33 +282,34 @@ impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>> {
     fn set(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .direction
-                .modify(|value| value & self.pin.get_port_clear_mask());
+        port_regs
+            .direction
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
-            compiler_fence(Ordering::Release);
+        compiler_fence(Ordering::Relaxed);
 
-            port_regs
-                .output
-                .modify(|value| value | self.pin.get_port_mask());
-        });
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(true);
     }
 
     /// Sets the GPIO Pin low.
     fn clear(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        single_proc_critical_section(|_token| {
-            port_regs
-                .output
-                .modify(|value| value & self.pin.get_port_clear_mask());
+        port_regs
+            .output
+            .get_bitband(self.pin.get_offset())
+            .write(false);
 
-            compiler_fence(Ordering::Release);
-            port_regs
-                .direction
-                .modify(|value| value | self.pin.get_port_mask());
-        });
+        compiler_fence(Ordering::Relaxed);
+
+        port_regs
+            .direction
+            .get_bitband(self.pin.get_offset())
+            .write(true);
     }
 
     /// Toggles the GPIO Pin.
@@ -357,24 +355,23 @@ pub(crate) fn set_pin_function<Pin: PinIdWithMode>(pin: Pin, desired_mode: PinMo
     match select_status {
         // Toggle Select 0.
         1 => {
-            single_proc_critical_section(|_token| {
-                port.select_0.modify(|value| value ^ pin.get_port_mask())
-            });
+            port.select_0
+                .get_bitband(pin.get_offset())
+                .modify(|value| !value);
         }
 
         // Toggle Select 1.
         2 => {
-            single_proc_critical_section(|_token| {
-                port.select_1.modify(|value| value ^ pin.get_port_mask())
-            });
+            port.select_1
+                .get_bitband(pin.get_offset())
+                .modify(|value| !value);
         }
 
         // Use the Select Compliment register to ensure atomic toggling of both Select 0 and 1.
         3 => {
-            single_proc_critical_section(|_token| {
-                port.complement_selection
-                    .modify(|value| value | pin.get_port_mask())
-            });
+            port.complement_selection
+                .get_bitband(pin.get_offset())
+                .modify(|value| !value);
         }
 
         _ => debug_assert_eq!(select_status, 0),
