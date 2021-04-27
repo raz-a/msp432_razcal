@@ -5,18 +5,15 @@
 // Dependencies
 //
 
-use core::sync::atomic::{compiler_fence, Ordering};
-
 use crate::{
     gpio::{
-        get_port_address, Disabled, GpioIn, GpioInputMode, GpioMode, GpioOut, GpioOutputMode,
-        GpioPort, GpioPortInUseToken, GpioPortSync, HighImpedance, OpenCollector, PullDown, PullUp,
-        PushPull,
+        get_gpio_port, Disabled, GpioIn, GpioInputMode, GpioMode, GpioOut, GpioOutputMode,
+        HighImpedance, OpenCollector, PullDown, PullUp, PushPull,
     },
-    pin::IdentifiablePort,
+    pin::PortX,
 };
 
-use super::{GpioBusInput, GpioBusOutput};
+use super::{private, GpioBusInput, GpioBusOutput};
 
 //
 // Constants
@@ -29,31 +26,34 @@ const ALL_PINS_MASK: u16 = 0xFFFF;
 //
 
 /// Represents a port configured as a GPIO Bus.
-pub struct GpioPortBus<Mode: GpioMode> {
+pub struct GpioPortBus<Port: PortX, Mode: GpioMode> {
     /// The specfic GPIO configuration.
     _config: Mode,
 
     //
-    // Points to the corresponding port registers.
+    // The actual port.
     //
-    port_regs: &'static mut GpioPort,
+    port: Port,
 }
 
 /// The following implements state modification for GPIO Port Bus configurations.
-impl<Mode: GpioMode> GpioPortBus<Mode> {
+impl<Port: PortX, Mode: GpioMode> GpioPortBus<Port, Mode> {
     /// Convert this port into a high-impedance input bus.
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in high-impedance input mode.
-    pub fn to_input_highz(self) -> GpioPortBus<GpioIn<HighImpedance>> {
-        self.port_regs.resistor_enable.set_halfword(0);
-        self.port_regs.direction.set_halfword(0);
+    pub fn to_input_highz(self) -> GpioPortBus<Port, GpioIn<HighImpedance>> {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+
+        port_regs.resistor_enable.write(0);
+        port_regs.direction.write(0);
+
         GpioPortBus {
             _config: GpioIn {
                 _input_mode: HighImpedance,
             },
 
-            port_regs: self.port_regs,
+            port: self.port,
         }
     }
 
@@ -61,16 +61,19 @@ impl<Mode: GpioMode> GpioPortBus<Mode> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in input mode with pull-up resistors.
-    pub fn to_input_pullup(self) -> GpioPortBus<GpioIn<PullUp>> {
-        self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
-        self.port_regs.direction.set_halfword(0);
-        self.port_regs.output.set_halfword(ALL_PINS_MASK);
+    pub fn to_input_pullup(self) -> GpioPortBus<Port, GpioIn<PullUp>> {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+
+        port_regs.resistor_enable.write(ALL_PINS_MASK);
+        port_regs.direction.write(0);
+        port_regs.output.write(ALL_PINS_MASK);
+
         GpioPortBus {
             _config: GpioIn {
                 _input_mode: PullUp,
             },
 
-            port_regs: self.port_regs,
+            port: self.port,
         }
     }
 
@@ -78,16 +81,19 @@ impl<Mode: GpioMode> GpioPortBus<Mode> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in input mode with pull-down resistors.
-    pub fn to_input_pulldown(self) -> GpioPortBus<GpioIn<PullDown>> {
-        self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
-        self.port_regs.direction.set_halfword(0);
-        self.port_regs.output.set_halfword(0);
+    pub fn to_input_pulldown(self) -> GpioPortBus<Port, GpioIn<PullDown>> {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+
+        port_regs.resistor_enable.write(ALL_PINS_MASK);
+        port_regs.direction.write(0);
+        port_regs.output.write(0);
+
         GpioPortBus {
             _config: GpioIn {
                 _input_mode: PullDown,
             },
 
-            port_regs: self.port_regs,
+            port: self.port,
         }
     }
 
@@ -95,15 +101,18 @@ impl<Mode: GpioMode> GpioPortBus<Mode> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in output mode with push-pull configuration.
-    pub fn to_output_pushpull(self) -> GpioPortBus<GpioOut<PushPull>> {
-        self.port_regs.output.set_halfword(0);
-        self.port_regs.direction.set_halfword(ALL_PINS_MASK);
+    pub fn to_output_pushpull(self) -> GpioPortBus<Port, GpioOut<PushPull>> {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+
+        port_regs.output.write(0);
+        port_regs.direction.write(ALL_PINS_MASK);
+
         GpioPortBus {
             _config: GpioOut {
                 _output_mode: PushPull,
             },
 
-            port_regs: self.port_regs,
+            port: self.port,
         }
     }
 
@@ -111,308 +120,104 @@ impl<Mode: GpioMode> GpioPortBus<Mode> {
     ///
     /// # Returns
     /// A GPIO Port Bus instance configured in output mode with open collector configuration.
-    pub fn to_output_opencollector(self) -> GpioPortBus<GpioOut<OpenCollector>> {
-        self.port_regs.output.set_halfword(0);
-        self.port_regs.direction.set_halfword(ALL_PINS_MASK);
-        self.port_regs.resistor_enable.set_halfword(ALL_PINS_MASK);
+    pub fn to_output_opencollector(self) -> GpioPortBus<Port, GpioOut<OpenCollector>> {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+
+        port_regs.output.write(0);
+        port_regs.direction.write(ALL_PINS_MASK);
+        port_regs.resistor_enable.write(ALL_PINS_MASK);
+
         GpioPortBus {
             _config: GpioOut {
                 _output_mode: OpenCollector,
             },
 
-            port_regs: self.port_regs,
+            port: self.port,
         }
     }
 }
 
-impl<Mode: GpioMode> GpioPortSync for GpioPortBus<Mode> {
-    /// Attempts to obtain a GpioPortInUseToken. Because this bug owns the entire port, this is
-    /// effectively a no-op.
-    ///
-    /// # Returns
-    /// `Some(GpioPortInUseToken)`
-    fn get_port_in_use_token(&self) -> Option<GpioPortInUseToken> {
-        // Set the free mask to 0 so no bits will be changed when the token is dropped.
-        Some(GpioPortInUseToken { free_mask: 0 })
-    }
-}
-
-impl<InputMode: GpioInputMode> GpioBusInput for GpioPortBus<GpioIn<InputMode>> {
+impl<Port: PortX, InputMode: GpioInputMode> GpioBusInput for GpioPortBus<Port, GpioIn<InputMode>> {
     /// Reads the value of the GPIO Bus.
     ///
     /// # Returns
     /// Value of the GPIO Bus.
     fn read(&self) -> usize {
-        self.port_regs.input.get_halfword() as usize
+        let port_regs = get_gpio_port(self.port.get_port_name());
+        port_regs.input.read() as usize
     }
 }
 
-impl<OutputMode: GpioOutputMode> GpioBusInput for GpioPortBus<GpioOut<OutputMode>> {
+impl<Port: PortX, OutputMode: GpioOutputMode> GpioBusInput
+    for GpioPortBus<Port, GpioOut<OutputMode>>
+{
     /// Reads the value of the GPIO Bus.
     ///
     /// # Returns
     /// Value of the GPIO Bus.
     fn read(&self) -> usize {
-        self.port_regs.input.get_halfword() as usize
+        let port_regs = get_gpio_port(self.port.get_port_name());
+        port_regs.input.read() as usize
     }
 }
 
-impl GpioBusOutput for GpioPortBus<GpioOut<PushPull>> {
+impl<Port: PortX> GpioBusOutput for GpioPortBus<Port, GpioOut<PushPull>> {
     /// Sets the value of the GPIO Bus.
     ///
     /// # Arguments
     /// `value` - The value to write to the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn write(&mut self, value: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.write_no_sync(value) };
+    fn write(&mut self, value: usize) {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+        port_regs.output.write(value as u16);
     }
 
     /// Sets bits on the GPIO Bus.
     ///
     /// # Arguments
     /// `set_mask` - The bits to set on the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn set_bits(&mut self, set_mask: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.set_bits_no_sync(set_mask) };
+    fn set_bits(&mut self, set_mask: usize) {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+        port_regs.output.modify(|value| value | set_mask as u16);
     }
 
     /// Clears bits on the GPIO Bus.
     ///
     /// # Arguments
     /// `clear_mask` - The bits to clear on the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn clear_bits(&mut self, clear_mask: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.clear_bits_no_sync(clear_mask) };
+    fn clear_bits(&mut self, clear_mask: usize) {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+        port_regs.output.modify(|value| value & !clear_mask as u16);
     }
 
     /// Toggles bits on the GPIO Bus.
     ///
     /// # Arguments
     /// `toggle_mask` - The bits to toggle on the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn toggle_bits(&mut self, toggle_mask: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.toggle_bits_no_sync(toggle_mask) };
-    }
-
-    /// Sets the value of the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `value` - The value to write to the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn write_no_sync(&mut self, value: usize) {
-        self.port_regs.output.set_halfword(value as u16);
-    }
-
-    /// Sets bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `set_mask` - The bits to set on the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn set_bits_no_sync(&mut self, set_mask: usize) {
-        let value = self.port_regs.output.get_halfword() | set_mask as u16;
-        self.port_regs.output.set_halfword(value);
-    }
-
-    /// Clears bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `clear_mask` - The bits to clear on the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn clear_bits_no_sync(&mut self, clear_mask: usize) {
-        let value = self.port_regs.output.get_halfword() & !clear_mask as u16;
-        self.port_regs.output.set_halfword(value);
-    }
-
-    /// Toggles bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `toggle_mask` - The bits to toggle on the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn toggle_bits_no_sync(&mut self, toggle_mask: usize) {
-        let value = self.port_regs.output.get_halfword() ^ toggle_mask as u16;
-        self.port_regs.output.set_halfword(value);
-    }
-}
-
-impl GpioBusOutput for GpioPortBus<GpioOut<OpenCollector>> {
-    /// Sets the value of the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `value` - The value to write to the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn write(&mut self, value: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.write_no_sync(value) };
-    }
-
-    /// Sets bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `set_mask` - The bits to set on the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn set_bits(&mut self, set_mask: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.set_bits_no_sync(set_mask) };
-    }
-
-    /// Clears bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `clear_mask` - The bits to clear on the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn clear_bits(&mut self, clear_mask: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.clear_bits_no_sync(clear_mask) };
-    }
-
-    /// Toggles bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `toggle_mask` - The bits to toggle on the bus.
-    /// `_port_sync_token` - Indicates that no other thread can access the GPIO port(s) this bus
-    /// belongs to.
-    fn toggle_bits(&mut self, toggle_mask: usize, _port_sync_token: &mut GpioPortInUseToken) {
-        unsafe { self.toggle_bits_no_sync(toggle_mask) };
-    }
-
-    /// Sets the value of the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `value` - The value to write to the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn write_no_sync(&mut self, value: usize) {
-        let current_state = self.port_regs.direction.get_halfword();
-
-        let cleared_bits = current_state & !value as u16;
-        self.port_regs.direction.set_halfword(cleared_bits);
-
-        compiler_fence(Ordering::SeqCst);
-
-        self.port_regs.output.set_halfword(value as u16);
-
-        compiler_fence(Ordering::SeqCst);
-
-        let set_bits = cleared_bits | value as u16;
-        self.port_regs.direction.set_halfword(set_bits);
-
-        debug_assert_eq!(
-            self.port_regs.direction.get_halfword(),
-            !self.port_regs.output.get_halfword()
-        );
-    }
-
-    /// Sets bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `set_mask` - The bits to set on the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn set_bits_no_sync(&mut self, set_mask: usize) {
-        // Set bits as input before changing the output register.
-        let dir_value = self.port_regs.direction.get_halfword() & !set_mask as u16;
-        self.port_regs.direction.set_halfword(dir_value);
-
-        compiler_fence(Ordering::SeqCst);
-
-        let out_value = self.port_regs.output.get_halfword() | set_mask as u16;
-        self.port_regs.output.set_halfword(out_value);
-
-        debug_assert_eq!(
-            self.port_regs.direction.get_halfword(),
-            !self.port_regs.output.get_halfword()
-        );
-    }
-
-    /// Clears bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `clear_mask` - The bits to clear on the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn clear_bits_no_sync(&mut self, clear_mask: usize) {
-        // Set bits as pull-down before changing direction.
-        let out_value = self.port_regs.output.get_halfword() & !clear_mask as u16;
-        self.port_regs.output.set_halfword(out_value);
-
-        compiler_fence(Ordering::SeqCst);
-
-        let dir_value = self.port_regs.direction.get_halfword() | clear_mask as u16;
-        self.port_regs.direction.set_halfword(dir_value);
-
-        debug_assert_eq!(
-            self.port_regs.direction.get_halfword(),
-            !self.port_regs.output.get_halfword()
-        );
-    }
-
-    /// Toggles bits on the GPIO Bus.
-    ///
-    /// # Arguments
-    /// `toggle_mask` - The bits to toggle on the bus.
-    ///
-    /// # Unsafe
-    /// This function is safe to use only if there are no active GPIO pins or buses that are in the
-    /// same port as this bus.
-    unsafe fn toggle_bits_no_sync(&mut self, toggle_mask: usize) {
-        let value = self.port_regs.output.get_halfword() ^ toggle_mask as u16;
-        self.write_no_sync(value as usize);
+    fn toggle_bits(&mut self, toggle_mask: usize) {
+        let port_regs = get_gpio_port(self.port.get_port_name());
+        port_regs.output.modify(|value| value ^ toggle_mask as u16);
     }
 }
 
 //
-// Public functions.
+// Note: GpioPortBus<Port, GpioOut<OpenCollector>> is not implemented as the output value cannot
+// be changed atomically.
 //
 
-pub fn gpio_port_bus_new<PortId: IdentifiablePort>(port: PortId) -> GpioPortBus<Disabled> {
-    let addr = get_port_address(port.get_port_name());
-    let gpio_port = unsafe { &mut *(addr as *mut GpioPort) };
-
-    //
-    // No need to mark GPIOPort as "in use" as the corresponding drop logic to ensure this gets
-    // undone + the typestate changes would create very unsafe code.
-    // This relies on the fact that no other pins on this port could ever be in use during this
-    // bus's lifetime as it owns the port structure.
-    //
-
-    // Configure pins to GPIO mode.
-    let sel0 = gpio_port.select_0.get_halfword();
-    let sel1 = gpio_port.select_1.get_halfword();
-
-    // Use the Select Complement reigster for bits with both Select 0 and 1 set.
-    let selc = sel0 & sel1;
-    gpio_port.complement_selection.set_halfword(selc);
-
-    compiler_fence(Ordering::SeqCst);
-
-    // Clear the appropriate remaing Select bits.
-    gpio_port.select_0.set_halfword(0);
-    gpio_port.select_1.set_halfword(0);
-
-    GpioPortBus {
-        _config: Disabled,
-        port_regs: gpio_port,
+impl<Port: PortX> GpioPortBus<Port, Disabled> {
+    /// Allocates a new GPIO configured Port.
+    ///
+    /// # Arguments
+    /// `port` - Provides the port to be configred for GPIO.
+    ///
+    /// # Returns
+    /// A GPIO Port in the `Disabled` configuration.
+    pub fn new(port: Port) -> Self {
+        Self {
+            _config: Disabled,
+            port: port,
+        }
     }
 }
+
+impl<Port: PortX, Mode: GpioMode> private::Sealed for GpioPortBus<Port, Mode> {}

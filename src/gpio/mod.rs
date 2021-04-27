@@ -8,14 +8,14 @@
 // Internal Modules
 //
 
-//mod bus;
+mod bus;
 mod pin;
 
 //
 // Reexports
 //
 
-//pub use bus::*;
+pub use bus::*;
 pub use pin::*;
 
 use crate::registers::{ReadOnly, ReadWrite, Reserved, PERIPHERAL_BASE};

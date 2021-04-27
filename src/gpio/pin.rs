@@ -2,10 +2,6 @@
 //! The `pin` module includes structures and functions to utilize GPIO as single independent pins.
 
 //
-// TODO: Bitbanded peripherals for writes.
-//
-
-//
 // TODO: Interrupts for Inputs
 //
 

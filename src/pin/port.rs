@@ -15,7 +15,7 @@ use seq_macro::seq;
 //
 
 /// Describes a port that can be identified by its port name.
-pub trait IdentifiablePort: private::Sealed {
+pub trait PortId: private::Sealed {
     /// Gets the name of this port.
     ///
     /// # Returns
@@ -28,6 +28,9 @@ pub trait IdentifiablePort: private::Sealed {
     /// Port size.
     fn get_port_size(&self) -> u8;
 }
+
+/// A trait that is a shorthabd for the `Port<...>` structure.
+pub trait PortX: private::Sealed + PortId {}
 
 //
 // Structures
@@ -53,9 +56,13 @@ seq!(N in 0..16 {
                 #(_pin#N: pin#N,)*
             }
         }
+
+        pub fn to_pins(self) -> (#(Pin<PORT_NAME, N>,)*) {
+            (#(self._pin#N,)*)
+        }
     }
 
-    impl<const PORT_NAME: char> IdentifiablePort for Port<PORT_NAME> {
+    impl<const PORT_NAME: char> PortId for Port<PORT_NAME> {
         /// Gets the name of this port.
         ///
         /// # Returns
@@ -72,6 +79,8 @@ seq!(N in 0..16 {
             16
         }
     }
+
+    impl<const PORT_NAME: char> PortX for Port<PORT_NAME> {}
 });
 
 //
