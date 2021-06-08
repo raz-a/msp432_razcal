@@ -2,10 +2,6 @@
 //! The `pin` module includes structures and functions to abstract pins as software resources.
 
 //
-// TODO: Pin implies default (GPIO mode)
-//
-
-//
 // TODO: Crate public "AlternatePin" type. <- Implements PinId + PinIdWithMode
 //
 
@@ -48,11 +44,11 @@ pub trait PinX: private::Sealed + PinId {}
 // The PinX trait also differentiates the main Pin structure from the the alternate pin structures.
 
 /// Represents a pin on the MCU.
-pub struct Pin<const PORT_NAME: char, const OFFSET: u8> {
+pub struct Pin<const PORT_NAME: char, const OFFSET: usize> {
     _marker: PhantomData<()>,
 }
 
-impl<const PORT_NAME: char, const OFFSET: u8> Pin<PORT_NAME, OFFSET> {
+impl<const PORT_NAME: char, const OFFSET: usize> Pin<PORT_NAME, OFFSET> {
     /// Creates a new Pin structure.
     ///
     /// # Returns
@@ -64,7 +60,7 @@ impl<const PORT_NAME: char, const OFFSET: u8> Pin<PORT_NAME, OFFSET> {
     }
 }
 
-impl<const PORT_NAME: char, const OFFSET: u8> PortComponent for Pin<PORT_NAME, OFFSET> {
+impl<const PORT_NAME: char, const OFFSET: usize> PortComponent for Pin<PORT_NAME, OFFSET> {
     fn get_port_mask(&self) -> u16 {
         1 << self.get_offset()
     }
@@ -74,7 +70,7 @@ impl<const PORT_NAME: char, const OFFSET: u8> PortComponent for Pin<PORT_NAME, O
     }
 }
 
-impl<const PORT_NAME: char, const OFFSET: u8> PinId for Pin<PORT_NAME, OFFSET> {
+impl<const PORT_NAME: char, const OFFSET: usize> PinId for Pin<PORT_NAME, OFFSET> {
     /// Gets the name of the port this pin belongs to.
     ///
     /// # Returns
@@ -88,11 +84,11 @@ impl<const PORT_NAME: char, const OFFSET: u8> PinId for Pin<PORT_NAME, OFFSET> {
     /// # Returns
     /// Offset
     fn get_offset(&self) -> u8 {
-        OFFSET
+        OFFSET as u8
     }
 }
 
-impl<const PORT_NAME: char, const OFFSET: u8> PinIdWithMode for Pin<PORT_NAME, OFFSET> {
+impl<const PORT_NAME: char, const OFFSET: usize> PinIdWithMode for Pin<PORT_NAME, OFFSET> {
     /// Gets the pin mode of the current pin.
     ///
     /// # Returns
@@ -102,7 +98,7 @@ impl<const PORT_NAME: char, const OFFSET: u8> PinIdWithMode for Pin<PORT_NAME, O
     }
 }
 
-impl<const PORT_NAME: char, const OFFSET: u8> PinX for Pin<PORT_NAME, OFFSET> {}
+impl<const PORT_NAME: char, const OFFSET: usize> PinX for Pin<PORT_NAME, OFFSET> {}
 
 macro_rules! define_pinset {
     ($(($port:tt, $port_char:literal, $($pin:literal),+)),+) => {
@@ -213,5 +209,5 @@ mod private {
     pub trait Sealed {}
 }
 
-impl<const PORT_NAME: char, const OFFSET: u8> private::Sealed for Pin<PORT_NAME, OFFSET> {}
-impl<const PORT_NAME: char, const OFFSET: u8> super::private::Sealed for Pin<PORT_NAME, OFFSET> {}
+impl<const PORT_NAME: char, const OFFSET: usize> private::Sealed for Pin<PORT_NAME, OFFSET> {}
+impl<const PORT_NAME: char, const OFFSET: usize> super::private::Sealed for Pin<PORT_NAME, OFFSET> {}

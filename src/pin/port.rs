@@ -8,6 +8,7 @@
 //
 
 use super::Pin;
+use paste::paste;
 use seq_macro::seq;
 
 //
@@ -26,7 +27,7 @@ pub trait PortId: private::Sealed {
     ///
     /// # Returns
     /// Port size.
-    fn get_port_size(&self) -> u8;
+    fn get_port_size(&self) -> usize;
 }
 
 /// A trait that is a shorthabd for the `Port<...>` structure.
@@ -75,12 +76,32 @@ seq!(N in 0..16 {
         ///
         /// # Returns
         /// Port size.
-        fn get_port_size(&self) -> u8 {
+        fn get_port_size(&self) -> usize {
             16
         }
     }
 
     impl<const PORT_NAME: char> PortX for Port<PORT_NAME> {}
+});
+
+macro_rules! define_port_section {
+    ($count:literal) => {
+        paste! {
+            seq!(N in 0..$count {
+                /// Represents a coniguous group of N pins within the same port.
+                pub struct [<PortSection $count>]<const PORT_NAME: char, const OFFSET: usize>
+                where
+                    #([(); OFFSET + N]: ,)*
+                {
+                    #(_pin#N: Pin<PORT_NAME, { OFFSET + N }>,)*
+                }
+            });
+        }
+    };
+}
+
+seq!(N in 1..16 {
+    define_port_section!(N);
 });
 
 //
