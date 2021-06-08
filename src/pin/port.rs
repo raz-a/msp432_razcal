@@ -84,6 +84,10 @@ seq!(N in 0..16 {
     impl<const PORT_NAME: char> PortX for Port<PORT_NAME> {}
 });
 
+// TODO: Get mask function.
+// TODO: Get port function.
+// TODO: Constructor.
+
 macro_rules! define_port_section {
     ($count:literal) => {
         paste! {
