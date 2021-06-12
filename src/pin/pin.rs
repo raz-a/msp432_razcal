@@ -16,10 +16,8 @@
 use core::marker::PhantomData;
 use paste::paste;
 
-use super::PortComponent;
-
 /// Describes a pin that can be identified by its port and pin offset.
-pub trait PinId: private::Sealed + PortComponent {
+pub trait PinId: private::Sealed {
     /// Gets the name of the port this pin belongs to.
     ///
     /// # Returns
@@ -57,16 +55,6 @@ impl<const PORT_NAME: char, const OFFSET: usize> Pin<PORT_NAME, OFFSET> {
         Pin {
             _marker: PhantomData {},
         }
-    }
-}
-
-impl<const PORT_NAME: char, const OFFSET: usize> PortComponent for Pin<PORT_NAME, OFFSET> {
-    fn get_port_mask(&self) -> u16 {
-        1 << self.get_offset()
-    }
-
-    fn get_port_clear_mask(&self) -> u16 {
-        !self.get_port_mask()
     }
 }
 
@@ -210,4 +198,3 @@ mod private {
 }
 
 impl<const PORT_NAME: char, const OFFSET: usize> private::Sealed for Pin<PORT_NAME, OFFSET> {}
-impl<const PORT_NAME: char, const OFFSET: usize> super::private::Sealed for Pin<PORT_NAME, OFFSET> {}
