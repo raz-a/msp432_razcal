@@ -1,5 +1,5 @@
 //! # Port Section
-//! The `port_section` module includes structures and functions to abstract contiguous sections of
+//! The `portsection` module includes structures and functions to abstract contiguous sections of
 //! ports as software resources.
 
 use paste::paste;
@@ -58,7 +58,7 @@ macro_rules! define_port_section {
                 impl<const PORT_NAME: char, const OFFSET: usize> [<PortSection $count>]<PORT_NAME, OFFSET> where
                     #([(); OFFSET + N]: ,)*
                 {
-                    /// Creates a new `port_section` structure.
+                    /// Creates a new `portsection` structure.
                     ///
                     /// # Arguments
                     /// `pin[N]` - Pin `N` for the section to be created.
