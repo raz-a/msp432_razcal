@@ -14,12 +14,14 @@
 //
 
 mod portbus;
+mod sectionbus;
 
 //
 // Reexports
 //
 
 pub use portbus::*;
+pub use sectionbus::*;
 
 //
 // Traits

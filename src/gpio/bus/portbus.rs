@@ -30,9 +30,7 @@ pub struct GpioPortBus<Port: PortX, Mode: GpioMode> {
     /// The specfic GPIO configuration.
     _config: Mode,
 
-    //
-    // The actual port.
-    //
+    /// The actual port.
     port: Port,
 }
 
