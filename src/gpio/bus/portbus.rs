@@ -135,7 +135,9 @@ impl<Port: PortX, Mode: GpioMode> GpioPortBus<Port, Mode> {
     }
 }
 
-impl<Port: PortX, InputMode: GpioInputMode> GpioBusInput for GpioPortBus<Port, GpioIn<InputMode>> {
+impl<Port: PortX, InputMode: GpioInputMode> GpioBusInput<16>
+    for GpioPortBus<Port, GpioIn<InputMode>>
+{
     /// Reads the value of the GPIO Bus.
     ///
     /// # Returns
@@ -146,7 +148,7 @@ impl<Port: PortX, InputMode: GpioInputMode> GpioBusInput for GpioPortBus<Port, G
     }
 }
 
-impl<Port: PortX, OutputMode: GpioOutputMode> GpioBusInput
+impl<Port: PortX, OutputMode: GpioOutputMode> GpioBusInput<16>
     for GpioPortBus<Port, GpioOut<OutputMode>>
 {
     /// Reads the value of the GPIO Bus.
@@ -159,7 +161,7 @@ impl<Port: PortX, OutputMode: GpioOutputMode> GpioBusInput
     }
 }
 
-impl<Port: PortX> GpioBusOutput for GpioPortBus<Port, GpioOut<PushPull>> {
+impl<Port: PortX> GpioBusOutput<16> for GpioPortBus<Port, GpioOut<PushPull>> {
     /// Sets the value of the GPIO Bus.
     ///
     /// # Arguments

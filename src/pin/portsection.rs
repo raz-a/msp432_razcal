@@ -12,7 +12,7 @@ use super::Pin;
 //
 
 /// Describes a contiguous section of a port.
-pub trait PortSectionX: private::Sealed {
+pub trait PortSectionX<const SIZE: usize>: private::Sealed {
     /// Gets the name of the port this section belongs to.
     ///
     /// # Returns
@@ -80,7 +80,7 @@ macro_rules! define_port_section {
                     }
                 }
 
-                impl<const PORT_NAME: char, const OFFSET: usize> PortSectionX for [<PortSection $count>]<PORT_NAME, OFFSET> where
+                impl<const PORT_NAME: char, const OFFSET: usize> PortSectionX<$count> for [<PortSection $count>]<PORT_NAME, OFFSET> where
                     #([(); OFFSET + N]: ,)*
                 {
 

@@ -17,7 +17,7 @@ use super::{private, GpioBusInput, GpioBusOutput};
 //
 
 /// Represents a port section configured as a GPIO Bus.
-pub struct GpioSectionBus<Section: PortSectionX, Mode: GpioMode> {
+pub struct GpioSectionBus<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode> {
     /// The specfic GPIO configuration.
     _config: Mode,
 
@@ -26,12 +26,14 @@ pub struct GpioSectionBus<Section: PortSectionX, Mode: GpioMode> {
 }
 
 /// The following implements state modification for GPIO Section Bus configurations.
-impl<Section: PortSectionX, Mode: GpioMode> GpioSectionBus<Section, Mode> {
+impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
+    GpioSectionBus<SIZE, Section, Mode>
+{
     // Convert this port section into a high-impedance input bus.
     ///
     /// # Returns
     /// A GPIO Section Bus instance configured in high-impedance input mode.
-    pub fn to_input_highz(self) -> GpioSectionBus<Section, GpioIn<HighImpedance>> {
+    pub fn to_input_highz(self) -> GpioSectionBus<SIZE, Section, GpioIn<HighImpedance>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
         port_regs
@@ -53,7 +55,7 @@ impl<Section: PortSectionX, Mode: GpioMode> GpioSectionBus<Section, Mode> {
     ///
     /// # Returns
     /// A GPIO Section Bus instance configured in input mode with pull-up resistors.
-    pub fn to_input_pullup(self) -> GpioSectionBus<Section, GpioIn<PullUp>> {
+    pub fn to_input_pullup(self) -> GpioSectionBus<SIZE, Section, GpioIn<PullUp>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
         port_regs
@@ -76,7 +78,7 @@ impl<Section: PortSectionX, Mode: GpioMode> GpioSectionBus<Section, Mode> {
     ///
     /// # Returns
     /// A GPIO Section Bus instance configured in input mode with pull-down resistors.
-    pub fn to_input_pulldown(self) -> GpioSectionBus<Section, GpioIn<PullDown>> {
+    pub fn to_input_pulldown(self) -> GpioSectionBus<SIZE, Section, GpioIn<PullDown>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
         port_regs
@@ -99,7 +101,7 @@ impl<Section: PortSectionX, Mode: GpioMode> GpioSectionBus<Section, Mode> {
     ///
     /// # Returns
     /// A GPIO Section Bus instance configured in output mode with push-pull configuration.
-    pub fn to_output_pushpull(self) -> GpioSectionBus<Section, GpioOut<PushPull>> {
+    pub fn to_output_pushpull(self) -> GpioSectionBus<SIZE, Section, GpioOut<PushPull>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
         port_regs.output.write(!self.section.get_mask() as u16);
@@ -118,7 +120,7 @@ impl<Section: PortSectionX, Mode: GpioMode> GpioSectionBus<Section, Mode> {
     ///
     /// # Returns
     /// A GPIO Section Bus instance configured in output mode with open collector configuration.
-    pub fn to_output_opencollector(self) -> GpioSectionBus<Section, GpioOut<OpenCollector>> {
+    pub fn to_output_opencollector(self) -> GpioSectionBus<SIZE, Section, GpioOut<OpenCollector>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
         port_regs.output.write(!self.section.get_mask() as u16);
@@ -137,8 +139,8 @@ impl<Section: PortSectionX, Mode: GpioMode> GpioSectionBus<Section, Mode> {
     }
 }
 
-impl<Section: PortSectionX, InputMode: GpioInputMode> GpioBusInput
-    for GpioSectionBus<Section, GpioIn<InputMode>>
+impl<const SIZE: usize, Section: PortSectionX<SIZE>, InputMode: GpioInputMode> GpioBusInput<SIZE>
+    for GpioSectionBus<SIZE, Section, GpioIn<InputMode>>
 {
     /// Reads the value of the GPIO Bus.
     ///
@@ -151,8 +153,8 @@ impl<Section: PortSectionX, InputMode: GpioInputMode> GpioBusInput
     }
 }
 
-impl<Section: PortSectionX, OutputMode: GpioOutputMode> GpioBusInput
-    for GpioSectionBus<Section, GpioOut<OutputMode>>
+impl<const SIZE: usize, Section: PortSectionX<SIZE>, OutputMode: GpioOutputMode> GpioBusInput<SIZE>
+    for GpioSectionBus<SIZE, Section, GpioOut<OutputMode>>
 {
     /// Reads the value of the GPIO Bus.
     ///
@@ -165,7 +167,9 @@ impl<Section: PortSectionX, OutputMode: GpioOutputMode> GpioBusInput
     }
 }
 
-impl<Section: PortSectionX> GpioBusOutput for GpioSectionBus<Section, GpioOut<PushPull>> {
+impl<const SIZE: usize, Section: PortSectionX<SIZE>> GpioBusOutput<SIZE>
+    for GpioSectionBus<SIZE, Section, GpioOut<PushPull>>
+{
     /// Sets the value of the GPIO Bus.
     ///
     /// # Arguments
@@ -221,7 +225,7 @@ impl<Section: PortSectionX> GpioBusOutput for GpioSectionBus<Section, GpioOut<Pu
 // be changed atomically.
 //
 
-impl<Section: PortSectionX> GpioSectionBus<Section, Disabled> {
+impl<const SIZE: usize, Section: PortSectionX<SIZE>> GpioSectionBus<SIZE, Section, Disabled> {
     /// Allocates a new GPIO configured Port.
     ///
     /// # Arguments
@@ -237,4 +241,7 @@ impl<Section: PortSectionX> GpioSectionBus<Section, Disabled> {
     }
 }
 
-impl<Section: PortSectionX, Mode: GpioMode> private::Sealed for GpioSectionBus<Section, Mode> {}
+impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode> private::Sealed
+    for GpioSectionBus<SIZE, Section, Mode>
+{
+}

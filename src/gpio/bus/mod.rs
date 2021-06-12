@@ -28,7 +28,7 @@ pub use sectionbus::*;
 //
 
 /// A GPIO Bus instance that is configured as an input.
-pub trait GpioBusInput: private::Sealed {
+pub trait GpioBusInput<const SIZE: usize>: private::Sealed {
     /// Reads the value of the GPIO Bus.
     ///
     /// # Returns
@@ -37,7 +37,7 @@ pub trait GpioBusInput: private::Sealed {
 }
 
 /// A GPIO Bus instance ths is configured as an output.
-pub trait GpioBusOutput: private::Sealed {
+pub trait GpioBusOutput<const SIZE: usize>: private::Sealed {
     /// Sets the value of the GPIO Bus.
     ///
     /// # Arguments
