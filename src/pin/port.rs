@@ -7,9 +7,9 @@
 // Dependencies
 //
 
-use super::Pin;
-use paste::paste;
 use seq_macro::seq;
+
+use super::Pin;
 
 //
 // Traits
@@ -50,6 +50,8 @@ seq!(N in 0..16 {
         /// # Arguments
         /// `pin[N]` - Pin `N` for the port to be created.
         ///
+        /// # Returns
+        /// Port.
         pub fn new(
             #(pin#N: Pin<PORT_NAME, N>,)*
         ) -> Self {
@@ -58,6 +60,10 @@ seq!(N in 0..16 {
             }
         }
 
+        /// Reverts the port back to its containing pins.
+        ///
+        /// # Returns
+        /// The pins contained by the port.
         pub fn to_pins(self) -> (#(Pin<PORT_NAME, N>,)*) {
             (#(self._pin#N,)*)
         }
@@ -82,30 +88,6 @@ seq!(N in 0..16 {
     }
 
     impl<const PORT_NAME: char> PortX for Port<PORT_NAME> {}
-});
-
-// TODO: Get mask function.
-// TODO: Get port function.
-// TODO: Constructor.
-
-macro_rules! define_port_section {
-    ($count:literal) => {
-        paste! {
-            seq!(N in 0..$count {
-                /// Represents a coniguous group of N pins within the same port.
-                pub struct [<PortSection $count>]<const PORT_NAME: char, const OFFSET: usize>
-                where
-                    #([(); OFFSET + N]: ,)*
-                {
-                    #(_pin#N: Pin<PORT_NAME, { OFFSET + N }>,)*
-                }
-            });
-        }
-    };
-}
-
-seq!(N in 1..16 {
-    define_port_section!(N);
 });
 
 //
