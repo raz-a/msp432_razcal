@@ -36,7 +36,7 @@ pub trait PortSectionX<const SIZE: usize>: private::Sealed {
     /// # Returns
     /// Section mask.
     fn get_mask(&self) -> usize {
-        (self.get_size() - 1) << self.get_offset()
+        ((1 << self.get_size()) - 1) << self.get_offset()
     }
 }
 
