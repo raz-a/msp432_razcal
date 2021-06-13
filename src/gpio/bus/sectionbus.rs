@@ -13,10 +13,6 @@ use crate::{
 use super::{private, GpioBusInput, GpioBusOutput};
 
 //
-// TODO: Writes need to be modifies!!!!!!!!!
-//
-
-//
 // Structures.
 //
 
@@ -42,9 +38,11 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
 
         port_regs
             .resistor_enable
-            .write(!self.section.get_mask() as u16);
+            .modify(|value| value & !self.section.get_mask() as u16);
 
-        port_regs.direction.write(!self.section.get_mask() as u16);
+        port_regs
+            .direction
+            .modify(|value| value & !self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioIn {
@@ -64,10 +62,15 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
 
         port_regs
             .resistor_enable
-            .write(self.section.get_mask() as u16);
+            .modify(|value| value | self.section.get_mask() as u16);
 
-        port_regs.direction.write(!self.section.get_mask() as u16);
-        port_regs.output.write(self.section.get_mask() as u16);
+        port_regs
+            .direction
+            .modify(|value| value & !self.section.get_mask() as u16);
+
+        port_regs
+            .output
+            .modify(|value| value | self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioIn {
@@ -87,10 +90,15 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
 
         port_regs
             .resistor_enable
-            .write(self.section.get_mask() as u16);
+            .modify(|value| value | self.section.get_mask() as u16);
 
-        port_regs.direction.write(!self.section.get_mask() as u16);
-        port_regs.output.write(!self.section.get_mask() as u16);
+        port_regs
+            .direction
+            .modify(|value| value & !self.section.get_mask() as u16);
+
+        port_regs
+            .output
+            .modify(|value| value & !self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioIn {
@@ -108,8 +116,13 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
     pub fn to_output_pushpull(self) -> GpioSectionBus<SIZE, Section, GpioOut<PushPull>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
-        port_regs.output.write(!self.section.get_mask() as u16);
-        port_regs.direction.write(self.section.get_mask() as u16);
+        port_regs
+            .output
+            .modify(|value| value & !self.section.get_mask() as u16);
+
+        port_regs
+            .direction
+            .modify(|value| value | self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioOut {
@@ -127,11 +140,17 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
     pub fn to_output_opencollector(self) -> GpioSectionBus<SIZE, Section, GpioOut<OpenCollector>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
-        port_regs.output.write(!self.section.get_mask() as u16);
-        port_regs.direction.write(self.section.get_mask() as u16);
+        port_regs
+            .output
+            .modify(|value| value & !self.section.get_mask() as u16);
+
+        port_regs
+            .direction
+            .modify(|value| value | self.section.get_mask() as u16);
+
         port_regs
             .resistor_enable
-            .write(self.section.get_mask() as u16);
+            .modify(|value| value | self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioOut {
