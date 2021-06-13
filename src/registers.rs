@@ -2,7 +2,10 @@
 //! The `registers` module includes structure to properly interact with registers as well as
 //! constants that hold the location of memory mapped registers.
 
-use core::marker::PhantomData;
+use core::{
+    marker::PhantomData,
+    ops::{BitAnd, BitOr, Not},
+};
 use vcell::VolatileCell;
 
 pub const PERIPHERAL_BASE: u32 = 0x4000_0000;
@@ -23,7 +26,17 @@ fn peripheral_to_bitband_alias(address: u32, bit: u8) -> u32 {
 // Trait to define allowed register primitives.
 //
 
-pub trait RegBase: Copy + Default + From<bool> + PartialEq + Sized {}
+pub trait RegBase:
+    BitAnd<Output = Self>
+    + BitOr<Output = Self>
+    + Copy
+    + Default
+    + From<bool>
+    + Not<Output = Self>
+    + PartialEq
+    + Sized
+{
+}
 
 impl RegBase for u8 {}
 impl RegBase for u16 {}
@@ -125,6 +138,22 @@ impl<T: RegBase> ReadWrite<T> {
     pub fn modify<F: FnOnce(T) -> T>(&self, modify_func: F) {
         let modified_value = modify_func(self.read());
         self.write(modified_value);
+    }
+
+    /// Clears bits based on the provided mask.
+    ///
+    /// # Arguments
+    /// `mask` - Provides the bits to clear.
+    pub fn clear_bits(&self, mask: T) {
+        self.modify(|value| value & !mask);
+    }
+
+    /// Sets bits based on the provided mask.
+    ///
+    /// # Arguments
+    /// `mask` - Provides the bits to set.
+    pub fn set_bits(&self, mask: T) {
+        self.modify(|value| value | mask);
     }
 }
 

@@ -177,7 +177,7 @@ impl<Port: PortX> GpioBusOutput<16> for GpioPortBus<Port, GpioOut<PushPull>> {
     /// `set_mask` - The bits to set on the bus.
     fn set_bits(&mut self, set_mask: usize) {
         let port_regs = get_gpio_port(self.port.get_port_name());
-        port_regs.output.modify(|value| value | set_mask as u16);
+        port_regs.output.set_bits(set_mask as u16);
     }
 
     /// Clears bits on the GPIO Bus.
@@ -186,7 +186,7 @@ impl<Port: PortX> GpioBusOutput<16> for GpioPortBus<Port, GpioOut<PushPull>> {
     /// `clear_mask` - The bits to clear on the bus.
     fn clear_bits(&mut self, clear_mask: usize) {
         let port_regs = get_gpio_port(self.port.get_port_name());
-        port_regs.output.modify(|value| value & !clear_mask as u16);
+        port_regs.output.clear_bits(clear_mask as u16);
     }
 
     /// Toggles bits on the GPIO Bus.

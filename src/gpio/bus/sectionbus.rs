@@ -38,11 +38,11 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
 
         port_regs
             .resistor_enable
-            .modify(|value| value & !self.section.get_mask() as u16);
+            .clear_bits(self.section.get_mask() as u16);
 
         port_regs
             .direction
-            .modify(|value| value & !self.section.get_mask() as u16);
+            .clear_bits(self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioIn {
@@ -62,15 +62,13 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
 
         port_regs
             .resistor_enable
-            .modify(|value| value | self.section.get_mask() as u16);
+            .set_bits(self.section.get_mask() as u16);
 
         port_regs
             .direction
-            .modify(|value| value & !self.section.get_mask() as u16);
+            .clear_bits(self.section.get_mask() as u16);
 
-        port_regs
-            .output
-            .modify(|value| value | self.section.get_mask() as u16);
+        port_regs.output.set_bits(self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioIn {
@@ -90,15 +88,13 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
 
         port_regs
             .resistor_enable
-            .modify(|value| value | self.section.get_mask() as u16);
+            .set_bits(self.section.get_mask() as u16);
 
         port_regs
             .direction
-            .modify(|value| value & !self.section.get_mask() as u16);
+            .clear_bits(self.section.get_mask() as u16);
 
-        port_regs
-            .output
-            .modify(|value| value & !self.section.get_mask() as u16);
+        port_regs.output.clear_bits(self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioIn {
@@ -116,13 +112,8 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
     pub fn to_output_pushpull(self) -> GpioSectionBus<SIZE, Section, GpioOut<PushPull>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
-        port_regs
-            .output
-            .modify(|value| value & !self.section.get_mask() as u16);
-
-        port_regs
-            .direction
-            .modify(|value| value | self.section.get_mask() as u16);
+        port_regs.output.clear_bits(self.section.get_mask() as u16);
+        port_regs.direction.set_bits(self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioOut {
@@ -140,17 +131,11 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>, Mode: GpioMode>
     pub fn to_output_opencollector(self) -> GpioSectionBus<SIZE, Section, GpioOut<OpenCollector>> {
         let port_regs = get_gpio_port(self.section.get_port_name());
 
-        port_regs
-            .output
-            .modify(|value| value & !self.section.get_mask() as u16);
-
-        port_regs
-            .direction
-            .modify(|value| value | self.section.get_mask() as u16);
-
+        port_regs.output.clear_bits(self.section.get_mask() as u16);
+        port_regs.direction.set_bits(self.section.get_mask() as u16);
         port_regs
             .resistor_enable
-            .modify(|value| value | self.section.get_mask() as u16);
+            .set_bits(self.section.get_mask() as u16);
 
         GpioSectionBus {
             _config: GpioOut {
@@ -215,7 +200,7 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>> GpioBusOutput<SIZE>
             ((set_mask << self.section.get_offset()) & self.section.get_mask()) as u16;
 
         let port_regs = get_gpio_port(self.section.get_port_name());
-        port_regs.output.modify(|value| value | masked_value);
+        port_regs.output.set_bits(masked_value);
     }
 
     /// Clears bits on the GPIO Bus.
@@ -227,7 +212,7 @@ impl<const SIZE: usize, Section: PortSectionX<SIZE>> GpioBusOutput<SIZE>
             ((clear_mask << self.section.get_offset()) & self.section.get_mask()) as u16;
 
         let port_regs = get_gpio_port(self.section.get_port_name());
-        port_regs.output.modify(|value| value & !masked_value);
+        port_regs.output.clear_bits(masked_value);
     }
 
     /// Toggles bits on the GPIO Bus.
