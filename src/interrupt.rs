@@ -1,10 +1,7 @@
 //! # Interrupt
 //! The `interrupt` module includes structures and functions to configure interrupts.
 
-use core::{
-    asm,
-    sync::atomic::{compiler_fence, Ordering},
-};
+use core::sync::atomic::{compiler_fence, Ordering};
 
 pub struct SingleProcessorCriticalSectionToken {
     _unused: (),

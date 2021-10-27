@@ -283,7 +283,7 @@ impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>> {
             .get_bitband(self.pin.get_offset())
             .write(false);
 
-        compiler_fence(Ordering::Relaxed);
+        compiler_fence(Ordering::Release);
 
         port_regs
             .output
@@ -300,7 +300,7 @@ impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<OpenCollector>> {
             .get_bitband(self.pin.get_offset())
             .write(false);
 
-        compiler_fence(Ordering::Relaxed);
+        compiler_fence(Ordering::Release);
 
         port_regs
             .direction
