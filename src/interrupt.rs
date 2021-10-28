@@ -24,8 +24,8 @@ fn enable_interrupts() {
 /// # Arguments
 /// `crtitical_section_function` - Provides a function to be executed in the context of a critical
 ///     section.
-pub fn single_proc_critical_section<F: Fn(SingleProcessorCriticalSectionToken)>(
-    crtitical_section_function: F,
+pub fn single_proc_critical_section<F: FnMut(SingleProcessorCriticalSectionToken)>(
+    mut crtitical_section_function: F,
 ) {
     disable_interrupts();
     let critical_section_token = SingleProcessorCriticalSectionToken { _unused: () };
