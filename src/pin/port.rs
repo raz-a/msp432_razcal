@@ -41,7 +41,7 @@ seq!(N in 0..16 {
 
     /// Represents a port on the MCU.
     pub struct Port<const PORT_NAME: char> {
-        #(_pin#N: Pin<PORT_NAME, N>,)*
+        #(_pin~N: Pin<PORT_NAME, N>,)*
     }
 
     impl<const PORT_NAME: char> Port<PORT_NAME> {
@@ -53,10 +53,10 @@ seq!(N in 0..16 {
         /// # Returns
         /// Port.
         pub fn new(
-            #(pin#N: Pin<PORT_NAME, N>,)*
+            #(pin~N: Pin<PORT_NAME, N>,)*
         ) -> Self {
             Self {
-                #(_pin#N: pin#N,)*
+                #(_pin~N: pin~N,)*
             }
         }
 
@@ -65,7 +65,7 @@ seq!(N in 0..16 {
         /// # Returns
         /// The pins contained by the port.
         pub fn to_pins(self) -> (#(Pin<PORT_NAME, N>,)*) {
-            (#(self._pin#N,)*)
+            (#(self._pin~N,)*)
         }
     }
 

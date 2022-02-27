@@ -52,7 +52,7 @@ macro_rules! define_port_section {
                 pub struct [<PortSection $count>]<const PORT_NAME: char, const OFFSET: usize> where
                     #([(); OFFSET + N]: ,)*
                 {
-                    #(_pin#N: Pin<PORT_NAME, { OFFSET + N }>,)*
+                    #(_pin~N: Pin<PORT_NAME, { OFFSET + N }>,)*
                 }
 
                 impl<const PORT_NAME: char, const OFFSET: usize> [<PortSection $count>]<PORT_NAME, OFFSET> where
@@ -65,9 +65,9 @@ macro_rules! define_port_section {
                     ///
                     /// # Returns
                     /// Port Section.
-                    pub fn new(#(pin#N: Pin<PORT_NAME, { OFFSET + N }>,)*) -> Self {
+                    pub fn new(#(pin~N: Pin<PORT_NAME, { OFFSET + N }>,)*) -> Self {
                         Self {
-                            #(_pin#N: pin#N,)*
+                            #(_pin~N: pin~N,)*
                         }
                     }
 
@@ -76,7 +76,7 @@ macro_rules! define_port_section {
                     /// # Returns
                     /// The pins contained by the port section.
                     pub fn to_pins(self) -> (#(Pin<PORT_NAME, {OFFSET + N}>,)*) {
-                        (#(self._pin#N,)*)
+                        (#(self._pin~N,)*)
                     }
                 }
 
