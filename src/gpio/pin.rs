@@ -269,7 +269,7 @@ impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<PushPull>> {
         port_regs
             .output
             .get_bitband(self.pin.get_offset())
-            .modify(|value| !value);
+            .modify(|value| value ^ true);
     }
 }
 
