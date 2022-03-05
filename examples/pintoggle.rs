@@ -9,7 +9,12 @@ use msp432_razcal::{
 
 #[link_section = ".vector_table.reset"]
 #[no_mangle]
-pub fn main() -> ! {
+pub fn start() -> ! {
+    pintoggle();
+}
+
+#[inline(never)]
+fn pintoggle() -> ! {
     if let Some(pins) = McuPinSet::get_mcu_pins() {
         let mut gpio_pin = GpioPin::new(pins.pa0).to_output_pushpull();
         loop {

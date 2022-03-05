@@ -190,6 +190,19 @@ impl<T: RegBase> BitBandReadWrite<T> {
         let modified_value = modify_func(self.read());
         self.write(modified_value);
     }
+
+    /// Performs a read-modify-write of the register.
+    ///
+    /// # Arguments
+    /// `modify_func` - A function to modify the register value.
+    ///
+    ///  # UNSAFE
+    ///  This function takes the raw register value and does not check if it is only modifying
+    ///  the bitband lowest bit.
+    pub unsafe fn modify_raw<F: FnOnce(T) -> T>(&self, modify_func: F) {
+        let modified_value = modify_func(self.value.get());
+        self.value.set(modified_value);
+    }
 }
 
 //

@@ -266,10 +266,15 @@ impl<Pin: PinX> GpioPinOutput for GpioPin<Pin, GpioOut<PushPull>> {
     fn toggle(&mut self) {
         let port_regs = get_gpio_port(self.pin.get_port_name());
 
-        port_regs
-            .output
-            .get_bitband(self.pin.get_offset())
-            .modify(|value| value ^ true);
+        // UNSAFE! Since the value is a boolean and only the bottom bit is being toggled, it is ok.
+        // This is to avoid the compiler making a clz + lsrs for the toggle instead of just an xor.
+
+        unsafe {
+            port_regs
+                .output
+                .get_bitband(self.pin.get_offset())
+                .modify_raw(|value| value ^ 1);
+        }
     }
 }
 
